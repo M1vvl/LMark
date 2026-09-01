@@ -1,0 +1,23 @@
+const repository = (process.env.GITHUB_REPOSITORY || '').split('/');
+const owner = process.env.LMARK_GITHUB_OWNER || repository[0] || '';
+const repo = process.env.LMARK_GITHUB_REPO || repository[1] || '';
+
+module.exports = {
+  appId: 'com.lmark.workspace',
+  productName: 'LMark',
+  artifactName: '${productName}-Setup-${version}-${arch}.${ext}',
+  asar: true,
+  asarUnpack: ['src/main/mcp-server.js'],
+  files: ['src/**/*', 'package.json', 'README.md'],
+  directories: { output: 'release-publish' },
+  win: { signAndEditExecutable: false, target: [{ target: 'nsis', arch: ['x64'] }] },
+  nsis: {
+    oneClick: false,
+    allowToChangeInstallationDirectory: true,
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
+    deleteAppDataOnUninstall: false,
+    differentialPackage: true
+  },
+  publish: owner && repo ? [{ provider: 'github', owner, repo, releaseType: 'draft' }] : undefined
+};

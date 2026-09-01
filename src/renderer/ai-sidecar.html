@@ -1,0 +1,30 @@
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file: https:; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 助手 · LMark</title>
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/ai-sidecar.css" />
+    <link rel="stylesheet" href="modules/ai-knowledge-writer.css" />
+  </head>
+  <body>
+    <main class="ai-sidecar-shell">
+      <header class="sidecar-header">
+        <div class="mac-traffic-lights" aria-hidden="true"><span class="mac-dot close"></span><span class="mac-dot minimize"></span><span class="mac-dot maximize"></span></div>
+        <div class="sidecar-heading" aria-hidden="true"><span class="eyebrow" id="sidecarEyebrow">API 助手</span><h1 id="sidecarTitle">AI 对话</h1></div>
+        <div class="sidecar-actions"><button class="circle-button" id="sidecarHistoryButton" type="button" title="历史对话" aria-label="历史对话">☷</button><button class="circle-button" id="sidecarForkButton" type="button" title="Fork 当前对话" aria-label="Fork 当前对话">⑂</button><button class="circle-button" id="sidecarNewChatButton" type="button" title="新对话" aria-label="新对话">＋</button><button class="circle-button" id="sidecarHideButton" type="button" title="隐藏 AI 侧栏" aria-label="隐藏 AI 侧栏">×</button></div>
+      </header>
+      <aside class="history-panel" id="historyPanel" hidden aria-label="历史对话"><div class="history-panel-heading"><strong>历史对话</strong><button class="circle-button" id="historyCloseButton" type="button" title="关闭历史对话" aria-label="关闭历史对话">×</button></div><div class="history-list" id="historyList"></div></aside>
+      <section class="api-view" id="apiView">
+        <div class="chat-messages" id="messages" aria-live="polite"></div>
+        <div class="composer-shell"><div class="api-controls"><label>模型<select id="modelSelect" aria-label="模型"></select></label><label>推理强度<select id="reasoningSelect" aria-label="推理强度"><option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option><option value="xhigh">极高</option></select></label></div><form class="composer" id="chatForm"><textarea id="chatInput" rows="1" placeholder="输入消息，按 Enter 发送；Shift+Enter 换行" aria-label="AI 消息"></textarea><button class="send-or-stop" id="sendButton" type="submit" title="发送" aria-label="发送"><span class="send-icon" aria-hidden="true"></span></button></form></div>
+      </section>
+      <section class="browser-view" id="browserView" hidden>
+        <div class="browser-toolbar"><select id="providerSelect" aria-label="浏览器 AI 服务"><option value="chatgpt">ChatGPT</option><option value="claude">Claude</option><option value="kimi">Kimi</option><option value="deepseek">DeepSeek</option></select><button class="circle-button" id="reloadButton" type="button" title="重新加载" aria-label="重新加载">↻</button><button class="circle-button" id="openWindowButton" type="button" title="在独立窗口中打开" aria-label="在独立窗口中打开">↗</button></div>
+        <div class="browser-host" id="browserHost"></div>
+      </section>
+    </main>
+    <script type="module" src="ai-sidecar.js"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+:root {
+  --font-ui: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", Consolas, monospace;
+  --bg: #111316;
+  --bg-elevated: rgba(28, 31, 36, 0.86);
+  --bg-panel: rgba(21, 24, 28, 0.84);
+  --bg-input: rgba(255, 255, 255, 0.055);
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --text: #f4f4f5;
+  --text-muted: #a5a7ad;
+  --text-subtle: #6f747d;
+  --accent: #9ecbff;
+  --accent-strong: #4a94ef;
+  --accent-ink: #0b1b2d;
+  --danger: #f26d74;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --sidebar-width: 292px;
+}
+
+body.light-theme {
+  --bg: #f3f5f7;
+  --bg-elevated: rgba(255, 255, 255, 0.86);
+  --bg-panel: rgba(250, 251, 252, 0.88);
+  --bg-input: rgba(0, 0, 0, 0.045);
+  --line: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.17);
+  --text: #1a1c20;
+  --text-muted: #626771;
+  --text-subtle: #8c929c;
+  --accent: #276fc1;
+  --accent-strong: #2464ab;
+  --accent-ink: #ffffff;
+  --shadow: 0 18px 60px rgba(43, 56, 70, 0.16);
+}

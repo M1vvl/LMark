@@ -1,0 +1,23 @@
+.content-primary { position: relative; }
+
+
+.document-viewer { min-height: 0; flex: 1; display: flex; flex-direction: column; margin: 8px 10px 0; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 8px 8px 0 0; background: color-mix(in srgb, var(--bg-elevated) 90%, transparent); }
+.document-viewer-header { min-height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 10px 0 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg-input) 72%, transparent); }
+.document-viewer-heading { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.document-viewer-heading h2 { max-width: min(62vw, 760px); margin: 2px 0 0; overflow: hidden; color: var(--text); font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.document-viewer-file-icon { position: relative; width: 19px; height: 23px; flex: 0 0 19px; border: 1.4px solid color-mix(in srgb, var(--accent) 72%, var(--text)); border-radius: 3px; }
+.document-viewer-file-icon::before { content: "PDF"; position: absolute; left: 2px; bottom: 3px; color: var(--accent); font: 600 6px var(--font-mono); }
+.document-viewer-file-icon::after { content: ""; position: absolute; top: -1.4px; right: -1.4px; width: 6px; height: 6px; border-left: 1.4px solid currentColor; border-bottom: 1.4px solid currentColor; background: var(--bg-input); clip-path: polygon(0 0, 100% 100%, 0 100%); }
+.document-viewer-surface { min-height: 0; flex: 1; background: #eef0f2; }
+.document-viewer-surface embed { width: 100%; height: 100%; display: block; border: 0; }
+
+.document-drop-overlay { position: absolute; z-index: 18; inset: 10px; display: grid; place-content: center; justify-items: center; gap: 11px; color: var(--text); border: 1px solid color-mix(in srgb, var(--accent) 58%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--bg-elevated) 82%, transparent); box-shadow: 0 18px 54px rgba(0,0,0,.26), 0 0 0 1px rgba(255,255,255,.06) inset; backdrop-filter: blur(26px) saturate(135%); pointer-events: none; }
+.document-drop-overlay strong { font-size: 13px; font-weight: 700; }
+.document-drop-glyph { position: relative; width: 42px; height: 50px; border: 1.5px solid var(--accent); border-radius: 6px; background: color-mix(in srgb, var(--accent) 9%, var(--bg-input)); box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 12%, transparent); }
+.document-drop-glyph::before { content: ""; position: absolute; left: 12px; top: 21px; width: 16px; height: 16px; border-left: 2px solid var(--accent); border-top: 2px solid var(--accent); transform: rotate(45deg); }
+.document-drop-glyph::after { content: ""; position: absolute; left: 19px; top: 20px; width: 2px; height: 22px; border-radius: 2px; background: var(--accent); }
+.document-drag-active .content-primary { isolation: isolate; }
+
+@media (max-width: 720px) {
+  .document-viewer-heading h2 { max-width: 48vw; }
+}

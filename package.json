@@ -1,0 +1,30 @@
+{
+  "name": "lmark",
+  "version": "0.2.0",
+  "description": "A modular Windows 11 knowledge workspace with standard Markdown notes.",
+  "main": "src/main.js",
+  "author": "Codex",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test test/*.test.js",
+    "privacy:audit": "node scripts/release/privacy-audit.cjs",
+    "release:validate": "node scripts/release/validate-release.cjs",
+    "release:check": "npm run privacy:audit && npm run release:validate",
+    "dist:dir": "npm run privacy:audit && electron-builder --win dir -c build/electron-builder.config.cjs",
+    "dist:setup": "npm run privacy:audit && electron-builder --win nsis -c build/electron-builder.config.cjs --publish never",
+    "release:publish": "electron-builder --win nsis -c build/electron-builder.config.cjs --publish always"
+  },
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12"
+  },
+  "allowScripts": {
+    "electron@37.10.3": true
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}

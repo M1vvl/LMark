@@ -1,0 +1,30 @@
+.message-actions { display: flex; justify-content: flex-end; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.write-knowledge-button { height: 28px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--text-muted); border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--bg-elevated) 88%, transparent); font-size: 10px; font-weight: 700; }
+.write-knowledge-button:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 36%, var(--line)); background: color-mix(in srgb, var(--accent) 11%, var(--bg-elevated)); }
+
+.knowledge-write-overlay { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 18px; background: rgba(0, 0, 0, .56); user-select: none; }
+.knowledge-write-dialog { width: min(430px, 100%); max-height: calc(100vh - 36px); overflow-y: auto; padding: 20px; color: var(--text); border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-elevated); box-shadow: 0 24px 70px rgba(0, 0, 0, .46); }
+.knowledge-write-dialog header > span { color: var(--text-subtle); font-size: 10px; font-weight: 700; }
+.knowledge-write-dialog h2 { margin: 4px 0 6px; font-size: 17px; }
+.knowledge-write-dialog header p { margin: 0; color: var(--text-muted); font-size: 11px; line-height: 1.55; }
+.knowledge-write-fields { display: grid; gap: 12px; margin-top: 17px; }
+.knowledge-write-fields > label { display: grid; gap: 6px; color: var(--text-muted); font-size: 10px; }
+.knowledge-write-fields select,
+.knowledge-write-fields input[type="text"] { width: 100%; height: 36px; padding: 0 10px; color: var(--text); border: 1px solid var(--line-strong); border-radius: 8px; outline: none; background: var(--bg-input); }
+.knowledge-write-fields select:focus,
+.knowledge-write-fields input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent); }
+.knowledge-write-fields fieldset { display: flex; gap: 7px; margin: 0; padding: 0; border: 0; }
+.knowledge-write-fields legend { margin-bottom: 6px; color: var(--text-muted); font-size: 10px; }
+.knowledge-write-fields fieldset label { position: relative; }
+.knowledge-write-fields fieldset input { position: absolute; opacity: 0; pointer-events: none; }
+.knowledge-write-fields fieldset span { min-width: 66px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 999px; color: var(--text-muted); background: var(--bg-input); cursor: pointer; font-size: 10px; font-weight: 700; }
+.knowledge-write-fields fieldset input:checked + span { color: var(--text); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 15%, var(--bg-input)); }
+.knowledge-write-warning { min-height: 15px; margin: -4px 0 0; color: #ff8585; font-size: 10px; line-height: 1.5; }
+.knowledge-write-dialog footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.knowledge-write-dialog footer button { min-width: 78px; height: 34px; padding: 0 14px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.knowledge-write-cancel { color: var(--text-muted); border: 1px solid var(--line); background: var(--bg-input); }
+.knowledge-write-save { color: #25262a; background: #f1f1f1; }
+.knowledge-write-save:disabled { cursor: wait; opacity: .62; }
+.knowledge-write-status { min-height: 16px; margin: 10px 0 0; color: var(--text-subtle); font-size: 10px; text-align: center; }
+.knowledge-write-status[data-state="success"] { color: #63d391; }
+.knowledge-write-status[data-state="error"] { color: #ff8585; }

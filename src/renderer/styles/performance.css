@@ -1,0 +1,49 @@
+/* Keep the jelly appearance without forcing Chromium to repaint the whole
+   window behind every popup. Hardware acceleration remains enabled in main. */
+.titlebar,
+.workspace-panel,
+.system-card,
+.menu-popover,
+.theme-panel,
+.workspace-mode-menu,
+.ai-mode-menu,
+.ai-sidecar,
+.project-action-menu,
+.workspace-context-menu,
+.project-modal-overlay,
+.project-modal,
+.knowledge-context-menu,
+.knowledge-notes-panel {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.project-modal-overlay { background: rgba(0, 0, 0, .5); }
+.project-modal-overlay,
+.project-modal,
+.menu-popover,
+.theme-panel,
+.workspace-mode-menu,
+.ai-mode-menu,
+.project-action-menu,
+.workspace-context-menu,
+.knowledge-context-menu {
+  animation: none !important;
+}
+.project-modal,
+.menu-popover,
+.theme-panel,
+.workspace-mode-menu,
+.ai-mode-menu,
+.project-action-menu,
+.workspace-context-menu,
+.knowledge-context-menu {
+  contain: layout paint;
+}
+.menu-trigger,
+.title-theme-button,
+.workspace-mode-button,
+.footer-mode-button,
+.jelly-settings-button,
+.project-more-button,
+.section-add-button,
+.leisure-game-button { transition-duration: .12s; }

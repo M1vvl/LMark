@@ -1,0 +1,163 @@
+/* Visual behavior for the workspace jelly blocks lives in this module. */
+.workspace-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 7%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 34%),
+    linear-gradient(150deg, rgba(255,255,255,.075), transparent 38%),
+    var(--bg-panel);
+}
+
+.workspace-panel > * { position: relative; z-index: 1; }
+.workspace-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: color-mix(in srgb, var(--bg-panel) 38%, transparent);
+  backdrop-filter: blur(5px) saturate(84%);
+  transition: opacity .2s ease;
+}
+.workspace-panel.search-focused::before { opacity: .94; background: color-mix(in srgb, var(--bg-panel) 52%, transparent); backdrop-filter: blur(17px) saturate(68%); }
+.workspace-panel.search-focused .workspace-search { z-index: 5; }
+.workspace-panel.search-focused .workspace-search {
+  transform: translateY(-1px) scale(1.018);
+  border-color: color-mix(in srgb, var(--accent) 75%, transparent);
+  background: color-mix(in srgb, var(--bg-elevated) 84%, var(--accent) 16%);
+  box-shadow: 0 9px 28px rgba(0,0,0,.3), 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent), 0 1px 0 rgba(255,255,255,.14) inset;
+}
+.workspace-search { position: relative; transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .2s ease, background .2s ease, box-shadow .2s ease; }
+.workspace-search input { user-select: text; }
+
+.workspace-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .7;
+  background: linear-gradient(180deg, rgba(255,255,255,.1), transparent 18%, transparent 78%, rgba(0,0,0,.18));
+}
+
+.tree-section {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 55%, transparent) transparent;
+  scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+}
+
+.tree-section::-webkit-scrollbar { width: 7px; }
+.tree-section::-webkit-scrollbar-track { background: transparent; }
+.tree-section::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--accent) 48%, transparent); background-clip: padding-box; }
+
+.tree-section::before,
+.tree-section::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 14px;
+  pointer-events: none;
+  transition: opacity .22s ease, height .22s ease;
+}
+
+.tree-section::before { top: 0; margin-bottom: -14px; background: linear-gradient(var(--bg-panel), transparent); opacity: 0; }
+.tree-section::after { bottom: 0; margin-top: -14px; background: linear-gradient(transparent, var(--bg-panel)); opacity: .9; }
+.tree-section[data-scroll-direction="down"]::before { opacity: .95; }
+.tree-section:not(.is-scrolling)::after { opacity: .55; }
+.project-search-empty { padding: 16px 10px; color: var(--text-subtle); font-size: 11px; text-align: center; }
+.project-search-empty[hidden] { display: none; }
+
+.section-label { position: sticky; top: 0; z-index: 3; min-height: 26px; background: linear-gradient(var(--bg-panel) 68%, transparent); }
+.workspace-sections { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-top: 8px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 55%, transparent) transparent; }
+.workspace-sections::-webkit-scrollbar { width: 7px; }
+.workspace-sections::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--accent) 48%, transparent); background-clip: padding-box; }
+.workspace-section { overflow: visible; min-height: auto; padding-bottom: 16px; }
+.workspace-section + .workspace-section { padding-top: 6px; border-top: 1px solid color-mix(in srgb, var(--line) 72%, transparent); }
+.workspace-section[data-workspace-id="default"] { padding-top: 0; }
+.workspace-section:not([data-workspace-id="default"]) .section-label { border-radius: 8px; transform-origin: 18% 50%; transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease; }
+.workspace-section:not([data-workspace-id="default"]) .section-label:hover { transform: translateX(2px) scaleX(1.008); box-shadow: 0 5px 15px rgba(0,0,0,.11), 0 0 0 1px color-mix(in srgb, var(--accent) 15%, transparent) inset; }
+.workspace-section:not([data-workspace-id="default"]).is-collapsed .section-label { animation: workbar-jelly-settle .34s cubic-bezier(.2,.8,.2,1); }
+.workspace-section-entering { animation: workbar-jelly-in .42s cubic-bezier(.2,.85,.25,1.15); }
+.section-actions { display: flex; align-items: center; gap: 6px; }
+.section-add-button {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  color: var(--accent);
+  background: transparent;
+  font-size: 17px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(-4px) scale(.86);
+  pointer-events: none;
+  transition: opacity .18s ease, transform .22s cubic-bezier(.2,.8,.2,1), background .18s ease;
+}
+.section-label:hover .section-add-button,
+.section-add-button:focus-visible { opacity: 1; transform: translateX(0) scale(1); pointer-events: auto; }
+.section-add-button:hover { color: color-mix(in srgb, var(--accent) 78%, white); background: transparent; }
+
+.tree-item {
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: start;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition: transform .23s cubic-bezier(.2,.8,.2,1), box-shadow .23s ease, background .2s ease, color .2s ease;
+}
+.tree-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 8% var(--pointer-y, 50%), color-mix(in srgb, var(--accent) 25%, transparent), transparent 48%);
+  transition: opacity .2s ease;
+}
+.tree-item:hover {
+  z-index: 2;
+  transform: translate3d(4px, -1px, 0) scale(1.012);
+  box-shadow: 0 7px 20px rgba(0,0,0,.2), 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent) inset;
+}
+.tree-item:hover::before { opacity: 1; }
+.tree-item.active {
+  background: linear-gradient(105deg, color-mix(in srgb, var(--accent) 18%, transparent), var(--bg-input));
+  box-shadow: 0 7px 24px rgba(0,0,0,.18), 0 0 0 1px color-mix(in srgb, var(--accent) 31%, transparent) inset;
+}
+.tree-item.active::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 2px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 78%, transparent);
+}
+.tree-section.is-scrolling .tree-item { transition-duration: .34s; }
+.tree-section.is-scrolling[data-scroll-direction="down"] .tree-item { transform: translateY(-1px); }
+.tree-section.is-scrolling[data-scroll-direction="up"] .tree-item { transform: translateY(1px); }
+.tree-section.is-scrolling .tree-item:hover { transform: translate3d(4px, -1px, 0) scale(1.012); }
+.tree-item-entering { animation: project-jelly-in .34s cubic-bezier(.2,.8,.2,1); }
+
+@keyframes workbar-jelly-in { 0% { opacity: 0; transform: translateY(-7px) scale(.96, .82); } 68% { opacity: 1; transform: translateY(1px) scale(1.015, 1.04); } 100% { transform: none; } }
+@keyframes workbar-jelly-settle { 42% { transform: scale(.985, 1.06); } 76% { transform: scale(1.008, .985); } }
+@keyframes project-jelly-in { from { opacity: 0; transform: translateX(-7px) scale(.97); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-section-entering, .workspace-section.is-collapsed .section-label, .tree-item-entering { animation: none; }
+}
