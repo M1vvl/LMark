@@ -1,6 +1,7 @@
 const repository = (process.env.GITHUB_REPOSITORY || '').split('/');
-const owner = process.env.LMARK_GITHUB_OWNER || repository[0] || '';
-const repo = process.env.LMARK_GITHUB_REPO || repository[1] || '';
+// Defaults target the public LMark repository; CI can override them explicitly.
+const owner = process.env.LMARK_GITHUB_OWNER || repository[0] || 'M1vvl';
+const repo = process.env.LMARK_GITHUB_REPO || repository[1] || 'LMark';
 
 module.exports = {
   appId: 'com.lmark.workspace',
