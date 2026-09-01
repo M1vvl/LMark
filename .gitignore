@@ -4,6 +4,7 @@ dist/
 release/
 release-publish/
 tmp/
+output/
 Mission/
 settings.json
 *.blockmap
