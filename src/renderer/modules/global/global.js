@@ -23,10 +23,19 @@ export function createGlobalController({ onToast }) {
     button.setAttribute('aria-pressed', String(active));
   });
   updateSourceButtons();
+  const closeMapSettings = () => {
+    mapSettingsButton?.setAttribute('aria-expanded', 'false');
+    if (mapSettings) mapSettings.hidden = true;
+  };
   mapSettingsButton?.addEventListener('click', () => {
     const open = mapSettingsButton.getAttribute('aria-expanded') !== 'true';
     mapSettingsButton.setAttribute('aria-expanded', String(open));
     if (mapSettings) mapSettings.hidden = !open;
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (mapSettings?.hidden !== false) return;
+    if (event.target instanceof Node && (mapSettings.contains(event.target) || mapSettingsButton?.contains(event.target))) return;
+    closeMapSettings();
   });
   let loaded = false;
   let launching = false;
@@ -34,7 +43,8 @@ export function createGlobalController({ onToast }) {
     try {
       const target = new URL(url || STARMAP_URL);
       target.search = '';
-      const runtime = new URLSearchParams({ lmark: String(Date.now()), mapSource });
+      const locale = localStorage.getItem('lmark.locale') === 'en' ? 'en' : 'zh-CN';
+      const runtime = new URLSearchParams({ lmark: String(Date.now()), mapSource, locale });
       const cesium = cesiumToken?.value.trim() || '';
       const tianditu = tiandituToken?.value.trim() || '';
       if (cesium) runtime.set('cesiumToken', cesium);
