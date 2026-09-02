@@ -47,7 +47,9 @@ export function createWorkspaceController({ onToast }) {
     { id: 'global', label: '环球区', description: '全球工具、地图与外部项目' }
   ];
   let modeMenu;
-  let currentMode = localStorage.getItem(MODE_KEY) || 'work';
+  // Always open in the focused work area. The user's last mode remains
+  // available through the switcher but must not strand startup in Global.
+  let currentMode = 'work';
 
   const closeModeMenu = () => {
     modeMenu?.remove();
