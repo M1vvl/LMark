@@ -6,6 +6,7 @@ release-publish/
 tmp/
 output/
 Mission/
+环球区/
 settings.json
 *.blockmap
 latest*.yml

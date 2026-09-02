@@ -6,19 +6,11 @@ const repo = process.env.LMARK_GITHUB_REPO || repository[1] || 'LMark';
 module.exports = {
   appId: 'com.lmark.workspace',
   productName: 'LMark',
-  artifactName: '${productName}-Setup-${version}-${arch}.${ext}',
+  artifactName: '${productName}-Portable-${version}-${arch}.${ext}',
   asar: true,
   asarUnpack: ['src/main/mcp-server.js'],
   files: ['src/**/*', 'package.json', 'README.md'],
   directories: { output: 'release-publish' },
-  win: { icon: 'build/lmark.ico', signExecutable: false, target: [{ target: 'nsis', arch: ['x64'] }] },
-  nsis: {
-    oneClick: false,
-    allowToChangeInstallationDirectory: true,
-    createDesktopShortcut: true,
-    createStartMenuShortcut: true,
-    deleteAppDataOnUninstall: false,
-    differentialPackage: true
-  },
+  win: { icon: 'build/lmark.ico', signExecutable: false, target: [{ target: 'dir', arch: ['x64'] }] },
   publish: owner && repo ? [{ provider: 'github', owner, repo, releaseType: 'draft' }] : undefined
 };

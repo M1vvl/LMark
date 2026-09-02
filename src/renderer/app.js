@@ -9,6 +9,7 @@ import { createKnowledgeWorkspace } from './modules/knowledge-workspace.js';
 import { createLeisureController } from './modules/leisure/leisure.js';
 import { createDocumentViewer } from './modules/document-viewer/document-viewer.js';
 import { createI18nController } from './modules/i18n.js';
+import { createGlobalController } from './modules/global/global.js';
 
 const toast = document.getElementById('toast');
 let toastTimer;
@@ -27,6 +28,7 @@ window.desktopAPI?.onUpdateEvent((name, payload) => {
 const i18n = createI18nController();
 createWorkspaceController({ onToast: showToast });
 createLeisureController({ onToast: showToast });
+createGlobalController({ onToast: showToast });
 createGelSidebar();
 createWorkspaceBars({ onToast: showToast });
 createAIController({ onToast: showToast });

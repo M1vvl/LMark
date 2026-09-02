@@ -21,8 +21,8 @@ API 密钥使用 Electron `safeStorage` 与当前 Windows 用户绑定加密。�
 1. 在 `package.json` 更新版本号。
 2. 执行 `npm run release:check` 和 `npm test`。
 3. 提交代码并创建对应的 `v...` 标签。
-4. 推送标签。GitHub Actions 构建 Windows NSIS 安装器和便携 ZIP，并将安装器、校验文件、更新元数据和便携包上传到 Release。
-5. 下载 Draft 的安装器，在干净 Windows 用户中验证安装、数据隔离、升级和回滚。
+4. 推送标签。GitHub Actions 只构建 Windows 目录版并生成便携 ZIP，再将便携包上传到 Release。
+5. 下载便携 ZIP，在干净 Windows 用户中验证启动、数据隔离、升级和回滚。
 6. 验证完成后在 GitHub 将 Draft 发布。客户端的“检查更新”和开启“自动更新”只会读取已发布的稳定 Release。
 
 ## 回滚

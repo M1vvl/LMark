@@ -1,0 +1,13 @@
+.global-stage { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; padding: 20px 24px 24px; overflow: hidden; background: color-mix(in srgb, var(--accent) 3%, var(--bg-panel)); }
+.global-stage-header { min-height: 54px; flex: 0 0 54px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px 12px; border-bottom: 1px solid var(--line); }
+.global-stage-header h2 { margin: 4px 0 0; font-size: 20px; }
+.global-stage-actions { display: flex; align-items: center; gap: 8px; }
+.global-status { color: var(--text-subtle); font-size: 11px; }
+.global-app-shell { position: relative; min-height: 0; flex: 1; overflow: hidden; margin-top: 16px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--bg-input); box-shadow: var(--shadow); }
+.global-stage-content { min-height: 260px; display: flex; align-items: center; justify-content: center; gap: 20px; padding: 32px; color: var(--text-muted); }
+.global-stage-content h3 { margin: 0 0 8px; color: var(--text); font-size: 18px; }
+.global-stage-content p { max-width: 480px; margin: 0 0 16px; line-height: 1.65; }
+.global-hero-icon { display: grid; place-items: center; width: 72px; height: 72px; flex: 0 0 72px; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 50%; background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated)); font-size: 34px; box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 16%, transparent); }
+.global-starmap-frame { width: 100%; height: 100%; display: block; border: 0; background: #0b1020; }
+.folder-glyph { position: relative; display: block; width: 15px; height: 11px; border: 1.5px solid currentColor; border-radius: 2px; }
+.folder-glyph::before { content: ''; position: absolute; left: 1px; top: -4px; width: 7px; height: 4px; border: 1.5px solid currentColor; border-bottom: 0; border-radius: 2px 2px 0 0; }

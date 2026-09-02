@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: file: https:; object-src 'self' blob: file:; frame-src 'self' blob: file: https:; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: file: https:; object-src 'self' blob: file:; frame-src 'self' blob: file: https: http://127.0.0.1:5173; style-src 'self' 'unsafe-inline'; script-src 'self';" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LMark</title>
     <link rel="stylesheet" href="styles/tokens.css" />
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="modules/sidebar-visual/project-actions.css" />
     <link rel="stylesheet" href="modules/document-viewer/document-viewer.css" />
     <link rel="stylesheet" href="modules/leisure/leisure.css" />
+    <link rel="stylesheet" href="modules/global/global.css" />
     <link rel="stylesheet" href="styles/performance.css" />
   </head>
   <body>
@@ -112,6 +113,16 @@
           <section class="leisure-stage" id="leisureStage" hidden aria-label="休闲区">
             <div class="leisure-stage-header"><div><p class="eyebrow">休闲区</p><h2>轻松一下</h2></div><span class="leisure-status" id="leisureStatus">准备开始</span></div>
             <div class="leisure-game-shell" id="leisureGameShell"></div>
+          </section>
+          <section class="global-stage" id="globalStage" hidden aria-label="环球区">
+            <div class="global-stage-header">
+              <div><p class="eyebrow">环球区</p><h2>环球探索</h2></div>
+              <div class="global-stage-actions"><span class="global-status" id="globalStatus">StarMap 尚未启动</span><button class="icon-button subtle" id="openGlobalFolderButton" type="button" title="打开环球区文件夹" aria-label="打开环球区文件夹"><span class="folder-glyph" aria-hidden="true"></span></button><button class="ghost-button compact" id="launchGlobalMapButton" type="button">启动 StarMap</button></div>
+            </div>
+            <div class="global-app-shell" id="globalAppShell">
+              <div class="global-stage-content" id="globalStageContent"><div class="global-hero-icon" aria-hidden="true">✦</div><div><h3>环球区已准备好</h3><p>StarMap 独立保存在环球区文件夹内。启动后可直接在 LMark 中浏览地图与旅程。</p><button class="ghost-button" id="launchGlobalMapInlineButton" type="button">启动 StarMap</button></div></div>
+              <iframe class="global-starmap-frame" id="globalStarmapFrame" title="StarMap 环球地图" hidden allow="fullscreen" sandbox="allow-forms allow-modals allow-popups allow-same-origin allow-scripts"></iframe>
+            </div>
           </section>
           <div class="document-drop-overlay" id="documentDropOverlay" hidden aria-hidden="true"><div class="document-drop-glyph"></div><strong>释放以打开 PDF</strong></div>
           </div>

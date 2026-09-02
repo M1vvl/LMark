@@ -24,9 +24,12 @@ let localSettings = {};
 let tray;
 let isQuitting = false;
 const aiWindows = new Map();
+let globalStarMapProcess;
 let startupLogPath;
 let updater;
 const PROJECT_ROOT_SETTING = 'projectRootPath';
+const GLOBAL_ROOT_NAME = '环球区';
+const STARMAP_URL = 'http://127.0.0.1:5173/';
 const WORKSPACE_MARKER = '.codex-workbar.json';
 const KNOWLEDGE_EXTENSIONS = new Set(['.md', '.markdown', '.txt']);
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
@@ -134,6 +137,55 @@ async function ensureManagedProjectsRoot() {
   const root = managedProjectsRoot();
   await fs.promises.mkdir(root, { recursive: true });
   return root;
+}
+
+function globalRootPath() { return path.join(app.getPath('userData'), GLOBAL_ROOT_NAME); }
+async function ensureGlobalRoot() { const root = globalRootPath(); await fs.promises.mkdir(root, { recursive: true }); return root; }
+
+function starMapRoots() {
+  return [
+    path.join(app.getAppPath(), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
+    path.join(process.cwd(), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
+    path.join(app.getPath('userData'), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
+    path.join(process.resourcesPath, GLOBAL_ROOT_NAME, 'StarMap', '01_Web')
+  ].filter((value, index, values) => values.indexOf(value) === index);
+}
+
+function findStarMapRoot() {
+  return starMapRoots().find((root) => fs.existsSync(path.join(root, 'package.json')));
+}
+
+async function isStarMapAvailable() {
+  try {
+    const response = await fetch(STARMAP_URL, { signal: AbortSignal.timeout(1200) });
+    response.body?.cancel();
+    return response.ok;
+  } catch { return false; }
+}
+
+async function startGlobalStarMap() {
+  if (await isStarMapAvailable()) return { ok: true, url: STARMAP_URL, started: false };
+  const root = findStarMapRoot();
+  if (!root) throw new Error('没有找到环球区\\StarMap\\01_Web，请先把 StarMap 放入环球区文件夹');
+  if (!globalStarMapProcess || globalStarMapProcess.exitCode !== null) {
+    const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    globalStarMapProcess = spawn(npmCommand, ['run', 'dev:public'], {
+      cwd: root,
+      env: { ...process.env, BROWSER: 'none' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true
+    });
+    globalStarMapProcess.stdout?.on('data', (chunk) => logStartup(`StarMap: ${String(chunk).trim()}`));
+    globalStarMapProcess.stderr?.on('data', (chunk) => logStartup(`StarMap: ${String(chunk).trim()}`));
+    globalStarMapProcess.once('error', (error) => logStartup('StarMap process failed', error));
+    globalStarMapProcess.once('exit', () => { globalStarMapProcess = undefined; });
+  }
+  const deadline = Date.now() + 12000;
+  while (Date.now() < deadline) {
+    if (await isStarMapAvailable()) return { ok: true, url: STARMAP_URL, started: true };
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  throw new Error('StarMap 启动超时，请检查 Node.js 和依赖是否已安装');
 }
 
 async function listManagedProjects() {
@@ -709,6 +761,15 @@ function registerIpcHandlers() {
     try { return { ok: true, path: await setManagedProjectsRoot(nextPath) }; }
     catch (error) { return { ok: false, error: error.message }; }
   });
+  ipcMain.handle('global:open-folder', async () => {
+    try { const root = await ensureGlobalRoot(); await shell.openPath(root); return { ok: true, path: root }; }
+    catch (error) { return { ok: false, error: error.message }; }
+  });
+  ipcMain.handle('global:starmap-status', async () => ({ ok: true, available: await isStarMapAvailable(), url: STARMAP_URL }));
+  ipcMain.handle('global:start-starmap', async () => {
+    try { return await startGlobalStarMap(); }
+    catch (error) { return { ok: false, error: error.message }; }
+  });
   ipcMain.handle('update:get-status', () => updater?.getStatus() || { configured: false, packaged: app.isPackaged, version: app.getVersion(), autoUpdate: Boolean(localSettings.autoUpdate) });
   ipcMain.handle('update:set-auto', async (_event, enabled) => {
     localSettings.autoUpdate = Boolean(enabled);
@@ -1015,6 +1076,7 @@ app.whenReady().then(async () => {
   updater.configure('stable', { autoUpdate: Boolean(localSettings.autoUpdate) });
   registerIpcHandlers();
   await ensureManagedProjectsRoot();
+  await ensureGlobalRoot();
   await startProjectsWatcher();
   app.on('web-contents-created', (_event, contents) => {
     if (contents.getType() !== 'webview') return;
@@ -1030,5 +1092,6 @@ app.on('before-quit', () => {
   isQuitting = true;
   clearTimeout(projectsWatchTimer);
   projectsWatcher?.close();
+  if (globalStarMapProcess && globalStarMapProcess.exitCode === null) globalStarMapProcess.kill();
 });
 app.on('window-all-closed', () => { if (process.platform === 'darwin' && isQuitting) app.quit(); });

@@ -51,9 +51,9 @@ LMark 将程序与用户资料明确分开。应用更新只替换程序文件�
 - 工作区与休闲区切换
 - 小恐龙和俄罗斯方块小游戏
 
-## 安装
+## 使用便携版
 
-Windows 11 用户可从 [GitHub Releases](https://github.com/M1vvl/LMark/releases) 下载最新稳定版。首次公开版本为 `v0.1.0`。
+Windows 11 用户可从 [GitHub Releases](https://github.com/M1vvl/LMark/releases) 下载最新的 `LMark-Portable-*.zip`，解压后直接运行 `LMark.exe`。LMark 默认不生成或分发安装器；首次公开版本为 `v0.1.0`。
 
 安装和更新不会删除 `%APPDATA%\LMark`、用户选择的项目目录或 Markdown 笔记。卸载时也默认保留用户数据。
 
@@ -107,7 +107,7 @@ npm run release:check
 
 ## 发布与更新
 
-维护者推送版本标签后，GitHub Actions 使用仓库内置的 `GITHUB_TOKEN` 构建 Windows 安装程序和便携包，并创建稳定 Release。软件设置中只提供“自动更新”和“检查更新”：发现新版本时先展示版本说明，由用户确认后下载和安装；取消不会修改本地数据。维护者验证安装、升级、数据隔离和回滚后再公开发布。
+维护者推送版本标签后，GitHub Actions 使用仓库内置的 `GITHUB_TOKEN` 构建 Windows 目录版并生成便携 ZIP，再创建稳定 Release。软件设置中只提供“自动更新”和“检查更新”：发现新版本时先展示版本说明，由用户确认后下载和替换便携目录；取消不会修改本地数据。维护者验证启动、升级、数据隔离和回滚后再公开发布。
 
 ## 许可证
 

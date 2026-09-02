@@ -16,8 +16,7 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run release:check
       - run: npm test
-      - run: npm run dist:setup
-      - run: npm run release:portable
+      - run: npm run dist:portable
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
@@ -25,9 +24,6 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}
           files: |
-            release-publish/*.exe
-            release-publish/*.blockmap
-            release-publish/latest*.yml
             release-publish/*Portable*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

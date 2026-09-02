@@ -55,6 +55,7 @@ function createDinoGame({ shell, status }) {
 export function createLeisureController({ onToast }) {
   const sidebar = document.getElementById('leisureSidebar');
   const gameStage = document.getElementById('leisureStage');
+  const globalStage = document.getElementById('globalStage');
   const shell = document.getElementById('leisureGameShell');
   const status = document.getElementById('leisureStatus');
   const contentToolbar = document.querySelector('.content-toolbar');
@@ -67,10 +68,17 @@ export function createLeisureController({ onToast }) {
   const mountGame = (gameKey) => { destroyGame?.(); activeGame = gameKey; destroyGame = gameKey === TETRIS_KEY ? createTetrisGame({ shell, status }) : createDinoGame({ shell, status }); };
   const apply = (mode) => {
     const leisure = mode === 'leisure';
-    sidebar.hidden = !leisure; gameStage.hidden = !leisure; search.hidden = leisure; sections.hidden = leisure;
+    const global = mode === 'global';
+    // Keep the mode switch visible, but isolate each mode's navigation/content.
+    sidebar.hidden = !leisure;
+    gameStage.hidden = !leisure;
+    search.hidden = leisure || global;
+    sections.hidden = leisure || global;
     // The breadcrumb and document actions belong to the work area only. The
     // leisure canvas should start at the top of the right content surface.
-    if (contentToolbar) contentToolbar.hidden = leisure;
+    if (contentToolbar) contentToolbar.hidden = leisure || global;
+    if (globalStage) globalStage.hidden = !global;
+    document.body.dataset.workspaceMode = mode;
     modeButton?.classList.toggle('leisure-mode-button', leisure);
     if (leisure && !destroyGame) mountGame(activeGame);
     if (!leisure && destroyGame) { destroyGame(); destroyGame = null; shell.replaceChildren(); }
