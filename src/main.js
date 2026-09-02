@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, net, safeStorage, screen, session, shell, Tray } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const http = require('node:http');
 const { pathToFileURL } = require('node:url');
 const { spawn, spawnSync } = require('node:child_process');
 const { normalizeConfiguration, requestCompatibleAi, listCompatibleModels } = require('./main/ai/openai-compatible');
@@ -25,6 +26,8 @@ let tray;
 let isQuitting = false;
 const aiWindows = new Map();
 let globalStarMapProcess;
+let globalStarMapServer;
+let globalStarMapServerUrl = '';
 let startupLogPath;
 let updater;
 const PROJECT_ROOT_SETTING = 'projectRootPath';
@@ -147,7 +150,8 @@ function starMapRoots() {
     path.join(app.getAppPath(), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
     path.join(process.cwd(), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
     path.join(app.getPath('userData'), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
-    path.join(process.resourcesPath, GLOBAL_ROOT_NAME, 'StarMap', '01_Web')
+    path.join(process.resourcesPath, GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
+    path.join(path.dirname(process.resourcesPath), GLOBAL_ROOT_NAME, 'StarMap', '01_Web')
   ].filter((value, index, values) => values.indexOf(value) === index);
 }
 
@@ -156,17 +160,65 @@ function findStarMapRoot() {
 }
 
 async function isStarMapAvailable() {
+  const candidates = [globalStarMapServerUrl, STARMAP_URL].filter(Boolean);
   try {
-    const response = await fetch(STARMAP_URL, { signal: AbortSignal.timeout(1200) });
-    response.body?.cancel();
-    return response.ok;
+    for (const url of candidates) {
+      try {
+        const response = await fetch(url, { signal: AbortSignal.timeout(1200) });
+        response.body?.cancel();
+        if (response.ok) return true;
+      } catch { /* Try the next local endpoint. */ }
+    }
+    return false;
   } catch { return false; }
 }
 
+function findStarMapDist() {
+  const roots = [
+    path.join(app.getAppPath(), 'Global', 'StarMap', '01_Web', 'dist'),
+    path.join(process.cwd(), 'Global', 'StarMap', '01_Web', 'dist'),
+    path.join(app.getPath('userData'), 'Global', 'StarMap', '01_Web', 'dist'),
+    path.join(process.resourcesPath, 'Global', 'StarMap', '01_Web', 'dist'),
+    path.join(path.dirname(process.resourcesPath), 'Global', 'StarMap', '01_Web', 'dist')
+  ];
+  return roots.find((root) => fs.existsSync(path.join(root, 'index.html')));
+}
+
+function startGlobalStarMapServer(distRoot) {
+  if (globalStarMapServer && globalStarMapServerUrl) return Promise.resolve(globalStarMapServerUrl);
+  const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.wasm': 'application/wasm' };
+  globalStarMapServer = http.createServer(async (request, response) => {
+    try {
+      const pathname = decodeURIComponent(new URL(request.url || '/', 'http://localhost').pathname);
+      const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+      const target = path.resolve(distRoot, relative);
+      if (target !== distRoot && !target.toLowerCase().startsWith(`${distRoot.toLowerCase()}${path.sep}`)) { response.writeHead(403); response.end('Forbidden'); return; }
+      let file = target;
+      try { if (!(await fs.promises.stat(file)).isFile()) throw new Error('not-file'); }
+      catch { file = path.join(distRoot, 'index.html'); }
+      const data = await fs.promises.readFile(file);
+      response.writeHead(200, { 'Content-Type': mime[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+      response.end(data);
+    } catch { response.writeHead(500); response.end('StarMap server error'); }
+  });
+  globalStarMapServer.on('error', (error) => logStartup('StarMap static server failed', error));
+  return new Promise((resolve, reject) => {
+    globalStarMapServer.once('error', reject);
+    globalStarMapServer.listen(0, '127.0.0.1', () => {
+      const address = globalStarMapServer.address();
+      const port = typeof address === 'object' && address ? address.port : 0;
+      globalStarMapServerUrl = `http://127.0.0.1:${port}/`;
+      resolve(globalStarMapServerUrl);
+    });
+  });
+}
+
 async function startGlobalStarMap() {
-  if (await isStarMapAvailable()) return { ok: true, url: STARMAP_URL, started: false };
+  if (await isStarMapAvailable()) return { ok: true, url: globalStarMapServerUrl || STARMAP_URL, started: false };
+  const distRoot = findStarMapDist();
+  if (distRoot) return { ok: true, url: await startGlobalStarMapServer(distRoot), started: true, static: true };
   const root = findStarMapRoot();
-  if (!root) throw new Error('没有找到环球区\\StarMap\\01_Web，请先把 StarMap 放入环球区文件夹');
+  if (!root) throw new Error('没有找到 Global\\StarMap\\01_Web，请先把 StarMap 放入 Global 文件夹');
   if (!globalStarMapProcess || globalStarMapProcess.exitCode !== null) {
     const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     globalStarMapProcess = spawn(npmCommand, ['run', 'dev:public'], {
@@ -182,7 +234,7 @@ async function startGlobalStarMap() {
   }
   const deadline = Date.now() + 12000;
   while (Date.now() < deadline) {
-    if (await isStarMapAvailable()) return { ok: true, url: STARMAP_URL, started: true };
+    if (await isStarMapAvailable()) return { ok: true, url: globalStarMapServerUrl || STARMAP_URL, started: true };
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   throw new Error('StarMap 启动超时，请检查 Node.js 和依赖是否已安装');
@@ -1093,5 +1145,6 @@ app.on('before-quit', () => {
   clearTimeout(projectsWatchTimer);
   projectsWatcher?.close();
   if (globalStarMapProcess && globalStarMapProcess.exitCode === null) globalStarMapProcess.kill();
+  globalStarMapServer?.close();
 });
 app.on('window-all-closed', () => { if (process.platform === 'darwin' && isQuitting) app.quit(); });

@@ -31,8 +31,8 @@ export function createGlobalController({ onToast }) {
     status.textContent = loaded ? 'StarMap 已连接' : 'StarMap 尚未启动';
     launchButtons.forEach((button) => { button.textContent = loaded ? '重新加载 StarMap' : '启动 StarMap'; button.disabled = false; });
   };
-  const loadFrame = () => {
-    frame.src = `${STARMAP_URL}?lmark=${Date.now()}`;
+  const loadFrame = (url = STARMAP_URL) => {
+    frame.src = `${url}${url.includes('?') ? '&' : '?'}lmark=${Date.now()}`;
     status.textContent = '正在连接 StarMap…';
   };
   const launch = async () => {
@@ -43,7 +43,7 @@ export function createGlobalController({ onToast }) {
     try {
       const result = await window.desktopAPI?.startGlobalStarMap();
       if (!result?.ok) throw new Error(result?.error || 'StarMap 启动失败');
-      loadFrame();
+      loadFrame(result.url || STARMAP_URL);
     } catch (error) {
       setLoaded(false);
       onToast(error.message);
