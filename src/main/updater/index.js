@@ -11,18 +11,20 @@ const path = require('node:path');
 
 function createUpdater({ app, getMainWindow, log = () => {} }) {
   let channel = 'stable';
+  let autoUpdate = false;
   let configured = false;
   const send = (event, payload = {}) => {
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(`update:${event}`, payload);
   };
-  function configure(nextChannel = 'stable') {
+  function configure(nextChannel = 'stable', options = {}) {
     channel = nextChannel === 'beta' ? 'beta' : 'stable';
+    if (typeof options.autoUpdate === 'boolean') autoUpdate = options.autoUpdate;
     if (!app.isPackaged || !autoUpdater) return false;
     if (!fs.existsSync(path.join(process.resourcesPath, 'app-update.yml'))) return false;
     autoUpdater.channel = channel === 'beta' ? 'beta' : 'latest';
     autoUpdater.allowPrerelease = channel === 'beta';
-    autoUpdater.autoDownload = false;
+    autoUpdater.autoDownload = autoUpdate;
     autoUpdater.autoInstallOnAppQuit = true;
     if (configured) return true;
     autoUpdater.on('checking-for-update', () => send('checking', { channel }));
@@ -36,7 +38,12 @@ function createUpdater({ app, getMainWindow, log = () => {} }) {
   }
   return {
     configure,
-    getStatus: () => ({ configured, updaterAvailable: Boolean(autoUpdater), channel, packaged: app.isPackaged, version: app.getVersion() }),
+    getStatus: () => ({ configured, updaterAvailable: Boolean(autoUpdater), channel, autoUpdate, packaged: app.isPackaged, version: app.getVersion() }),
+    setAutoUpdate(enabled) {
+      autoUpdate = Boolean(enabled);
+      if (autoUpdater) autoUpdater.autoDownload = autoUpdate;
+      return this.getStatus();
+    },
     async check() {
       if (!configured) return { ok: false, skipped: true, reason: !autoUpdater ? '更新器依赖未安装' : (app.isPackaged ? '更新源未配置' : '开发模式不检查更新') };
       try { const result = await autoUpdater.checkForUpdates(); return { ok: true, updateInfo: result?.updateInfo || null }; }

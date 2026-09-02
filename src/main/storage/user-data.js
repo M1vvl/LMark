@@ -1,7 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 
 function paths(app) {
   const appData = app.getPath('appData');
@@ -56,6 +56,7 @@ function migrateSettings(settings = {}) {
   if (version < 2 && next.aiConfiguration?.apiKey) {
     delete next.aiConfiguration.apiKey;
   }
+  if (typeof next.autoUpdate !== 'boolean') next.autoUpdate = false;
   return next;
 }
 

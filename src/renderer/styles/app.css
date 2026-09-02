@@ -298,6 +298,12 @@ body.light-theme .system-card { background: rgba(255,255,255,.58); }
 .knowledge-format-toolbar .no-color-button:hover { border-color: var(--text); filter: brightness(1.12); transform: translateY(-1px); }
 .update-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
 .update-actions select { height: 28px; color: var(--text-muted); border: 1px solid var(--line); border-radius: 7px; background: var(--bg-input); font-size: 10px; }
+.update-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 3px 9px 3px 5px; border: 1px solid transparent; border-radius: 999px; color: var(--text-muted); background: color-mix(in srgb, var(--bg-input) 84%, transparent); cursor: pointer; transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease; }
+.update-toggle:hover { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, var(--bg-input)); }
+.update-toggle:has(input:checked) { color: var(--text); background: color-mix(in srgb, var(--accent) 22%, var(--bg-input)); box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 18%, transparent), inset 0 1px rgba(255, 255, 255, .12); transform: translateY(-1px); }
+.update-toggle input { width: 17px; height: 17px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.update-toggle span { font-size: 10px; font-weight: 650; }
+.release-choice-row { padding-top: 6px; }
 .knowledge-highlight-palette { height: 28px; display: inline-flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--bg-elevated) 88%, transparent); }
 .knowledge-format-toolbar .highlight-swatch { min-width: 18px; width: 18px; height: 18px; padding: 0; border: 2px solid color-mix(in srgb, var(--swatch) 50%, var(--line)); border-radius: 50%; background: var(--swatch); box-shadow: 0 1px 3px rgba(0,0,0,.2); }
 .knowledge-format-toolbar .highlight-swatch:hover { transform: translateY(-1px) scale(1.08); background: var(--swatch); }

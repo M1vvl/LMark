@@ -714,8 +714,27 @@ function registerIpcHandlers() {
     const channel = nextChannel === 'beta' ? 'beta' : 'stable';
     localSettings.updateChannel = channel;
     await saveLocalSettings();
-    updater?.configure(channel);
+    updater?.configure(channel, { autoUpdate: Boolean(localSettings.autoUpdate) });
     return updater?.getStatus() || { configured: false, channel };
+  });
+  ipcMain.handle('update:set-auto', async (_event, enabled) => {
+    localSettings.autoUpdate = Boolean(enabled);
+    await saveLocalSettings();
+    updater?.setAutoUpdate(localSettings.autoUpdate);
+    return updater?.getStatus() || { configured: false, autoUpdate: localSettings.autoUpdate };
+  });
+  ipcMain.handle('update:list-releases', async () => {
+    try {
+      const response = await fetch('https://api.github.com/repos/M1vvl/LMark/releases?per_page=30', { headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'LMark-Updater' }, signal: AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
+      const releases = await response.json();
+      return { ok: true, releases: releases.filter((release) => !release.draft).map((release) => ({ version: release.tag_name, tag: release.tag_name, prerelease: Boolean(release.prerelease), publishedAt: release.published_at, url: release.html_url, assets: (release.assets || []).map((asset) => ({ name: asset.name, url: asset.browser_download_url, size: asset.size })) })) };
+    } catch (error) { return { ok: false, error: error.message, releases: [] }; }
+  });
+  ipcMain.handle('update:open-release', async (_event, url) => {
+    if (typeof url !== 'string' || !/^https:\/\/github\.com\/M1vvl\/LMark\/releases\/.+/.test(url)) return { ok: false, error: '无效的 Release 地址' };
+    await shell.openExternal(url);
+    return { ok: true };
   });
   ipcMain.handle('update:check', () => updater?.check() || { ok: false, error: '更新器未初始化' });
   ipcMain.handle('update:download', () => updater?.download() || { ok: false, error: '更新器未初始化' });
@@ -1013,7 +1032,7 @@ app.whenReady().then(async () => {
   await migrateUserData(app, logStartup);
   loadLocalSettings();
   updater = createUpdater({ app, getMainWindow: () => mainWindow, log: logStartup });
-  updater.configure(localSettings.updateChannel);
+  updater.configure(localSettings.updateChannel, { autoUpdate: Boolean(localSettings.autoUpdate) });
   registerIpcHandlers();
   await ensureManagedProjectsRoot();
   await startProjectsWatcher();
@@ -1023,7 +1042,7 @@ app.whenReady().then(async () => {
     contents.setWindowOpenHandler(() => ({ action: 'allow', overrideBrowserWindowOptions: { autoHideMenuBar: true, webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: false } } }));
   });
   createWindow();
-  if (app.isPackaged) setTimeout(() => updater.check(), 8000);
+  if (app.isPackaged && localSettings.autoUpdate) setTimeout(() => updater.check(), 8000);
   app.on('activate', showMainWindow);
 }).catch((error) => logStartup('Application startup failed', error));
 
