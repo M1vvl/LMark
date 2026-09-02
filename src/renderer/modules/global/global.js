@@ -7,7 +7,20 @@ export function createGlobalController({ onToast }) {
   const status = document.getElementById('globalStatus');
   const launchButtons = [document.getElementById('launchGlobalMapButton'), document.getElementById('launchGlobalMapInlineButton')].filter(Boolean);
   const openFolderButton = document.getElementById('openGlobalFolderButton');
+  const mapSettingsButton = document.getElementById('globalMapSettingsButton');
+  const mapSettings = document.getElementById('globalMapSettings');
+  const cesiumToken = document.getElementById('globalCesiumToken');
+  const tiandituToken = document.getElementById('globalTiandituToken');
   if (!stage || !frame || !placeholder || !status) return;
+  if (cesiumToken) cesiumToken.value = localStorage.getItem('lmark.cesium-token') || '';
+  if (tiandituToken) tiandituToken.value = localStorage.getItem('lmark.tianditu-token') || '';
+  mapSettingsButton?.addEventListener('click', () => {
+    const open = mapSettingsButton.getAttribute('aria-expanded') !== 'true';
+    mapSettingsButton.setAttribute('aria-expanded', String(open));
+    if (mapSettings) mapSettings.hidden = !open;
+  });
+  cesiumToken?.addEventListener('change', (event) => localStorage.setItem('lmark.cesium-token', event.target.value.trim()));
+  tiandituToken?.addEventListener('change', (event) => localStorage.setItem('lmark.tianditu-token', event.target.value.trim()));
 
   let loaded = false;
   let launching = false;
