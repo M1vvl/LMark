@@ -34,7 +34,7 @@ function createUpdater({ app, getMainWindow, log = () => {} }) {
     autoUpdater.autoInstallOnAppQuit = true;
     if (configured) return true;
     autoUpdater.on('checking-for-update', () => send('checking', { channel }));
-    autoUpdater.on('update-available', (info) => send('available', { channel, version: info.version }));
+    autoUpdater.on('update-available', (info) => send('available', { channel, version: info.version, releaseNotes: typeof info.releaseNotes === 'string' ? info.releaseNotes : '' }));
     autoUpdater.on('update-not-available', (info) => send('none', { channel, version: info.version }));
     autoUpdater.on('download-progress', (progress) => send('progress', { percent: progress.percent, transferred: progress.transferred, total: progress.total }));
     autoUpdater.on('update-downloaded', (info) => send('downloaded', { version: info.version }));

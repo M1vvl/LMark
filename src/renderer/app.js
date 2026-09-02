@@ -15,6 +15,15 @@ let toastTimer;
 function showToast(message) { toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2200); }
 
 const theme = createThemeController({ onToast: showToast });
+window.desktopAPI?.onUpdateEvent((name, payload) => {
+  if (name === 'available') theme.showUpdatePrompt(payload);
+  if (name === 'none' && payload?.manual) showToast('当前已是最新版本');
+  if (name === 'downloaded') {
+    const prompt = document.getElementById('updatePrompt');
+    const button = prompt?.querySelector('[data-update-confirm]');
+    if (button) { button.disabled = false; button.textContent = '重启安装'; button.onclick = () => window.desktopAPI?.installUpdate(); }
+  }
+});
 const i18n = createI18nController();
 createWorkspaceController({ onToast: showToast });
 createLeisureController({ onToast: showToast });

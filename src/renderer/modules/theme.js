@@ -54,6 +54,26 @@ export function createThemeController({ onToast }) {
     applyTheme(theme);
   }
 
+  function showUpdatePrompt(payload = {}) {
+    if (document.getElementById('updatePrompt')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'updatePrompt';
+    overlay.className = 'project-modal-overlay';
+    const notes = typeof payload.releaseNotes === 'string' ? payload.releaseNotes : (payload.releaseName || '包含性能改进和问题修复。');
+    overlay.innerHTML = `<section class="project-modal update-prompt-modal" role="dialog" aria-modal="true"><div class="project-modal-header"><p class="eyebrow">软件更新</p><h3>发现新版本 ${payload.version || ''}</h3><p class="project-modal-description">${notes.replaceAll('<', '&lt;').replaceAll('>', '&gt;').slice(0, 1200)}</p></div><div class="project-modal-actions"><button class="jelly-cancel-button" data-update-cancel>取消</button><button class="jelly-confirm-button" data-update-confirm>更新</button></div></section>`;
+    document.body.append(overlay);
+    const close = () => overlay.remove();
+    overlay.querySelector('[data-update-cancel]').onclick = close;
+    overlay.querySelector('[data-update-confirm]').onclick = async () => {
+      const button = overlay.querySelector('[data-update-confirm]');
+      button.disabled = true;
+      if (payload.manual && payload.url) { await window.desktopAPI?.openRelease(payload.url); close(); return; }
+      button.textContent = '正在下载...';
+      const result = await window.desktopAPI?.downloadUpdate();
+      if (!result?.ok) { button.disabled = false; button.textContent = '重试更新'; onToast(result?.error || '更新下载失败'); }
+    };
+  }
+
   async function openPanel({ expandTheme = false, themeOnly = false, anchor = null, placement = 'above' } = {}) {
     const existing = document.getElementById('themePanel');
     if (existing) { closeActivePanel?.(); return; }
@@ -71,8 +91,7 @@ export function createThemeController({ onToast }) {
     const fullSettings = `<button class="settings-section-toggle jelly-settings-button" type="button" data-theme-toggle aria-expanded="${expandTheme}"><span class="settings-section-glyph" aria-hidden="true">◐</span><span>主题设置</span><span class="settings-section-chevron" aria-hidden="true">⌄</span></button><div data-theme-collapsible ${expandTheme ? '' : 'hidden'}>${themeControls}</div>
       <div class="setting-row project-location-row"><div><span>默认项目保存位置</span><small data-project-root>正在读取位置...</small></div><button class="jelly-settings-button compact" data-change-project-root>文件位置修改</button></div>
       <div class="setting-row language-setting-row"><div><span>语言</span><small>切换软件界面语言</small></div><div class="language-choice" role="group"><button type="button" data-language="zh-CN">简体中文</button><button type="button" data-language="en">English</button></div></div>
-      <div class="setting-row update-setting-row"><div><span>软件更新</span><small data-update-status></small></div><div class="update-actions"><select data-update-channel aria-label="更新通道"><option value="stable">稳定版</option><option value="beta">测试版</option></select><label class="update-toggle"><input type="checkbox" data-auto-update /><span>自动更新</span></label><button class="jelly-settings-button compact" data-check-update>检查更新</button><button class="jelly-settings-button compact" data-download-update hidden>下载</button><button class="jelly-settings-button compact" data-install-update hidden>重启安装</button></div></div>
-      <div class="setting-row release-choice-row"><div><span>选择版本</span><small>查看 GitHub Releases，下载指定版本</small></div><div class="update-actions"><select data-release-version aria-label="选择版本"><option value="">读取版本...</option></select><button class="jelly-settings-button compact" data-open-release disabled>打开下载页</button></div></div>
+      <div class="setting-row update-setting-row"><div><span>软件更新</span><small data-update-status></small></div><div class="update-actions"><button class="update-toggle" type="button" data-auto-update aria-pressed="false">自动更新</button><button class="jelly-settings-button compact" data-check-update>检查更新</button></div></div>
       <button class="settings-section-toggle jelly-settings-button" type="button" data-mcp-toggle aria-expanded="false"><span class="settings-section-glyph" aria-hidden="true">⌘</span><span>MCP 本地知识服务</span><span class="settings-section-chevron" aria-hidden="true">⌄</span></button>
       <div class="mcp-settings-body" data-mcp-body hidden><p class="settings-help">外部 MCP 客户端可以通过只读搜索、读取、创建、更新和追加工具访问当前项目。更新操作支持文件修改时间冲突保护。</p><code data-mcp-command>正在读取命令...</code><button class="jelly-settings-button compact" data-copy-mcp>复制 MCP 启动命令</button></div>`;
     panel.innerHTML = `<div class="theme-panel-heading"><div><p class="eyebrow">${themeOnly ? '界面主题' : '工作区设置'}</p><h3>${themeOnly ? '主题' : '设置'}</h3></div><button class="icon-button subtle" data-close-theme aria-label="关闭${themeOnly ? '主题' : '设置'}">×</button></div>${themeOnly ? themeControls : fullSettings}`;
@@ -156,50 +175,33 @@ export function createThemeController({ onToast }) {
       onToast('默认项目保存位置已修改');
     };
     const updateStatus = panel.querySelector('[data-update-status]');
-    const updateChannel = panel.querySelector('[data-update-channel]');
     const checkUpdate = panel.querySelector('[data-check-update]');
-    const downloadUpdate = panel.querySelector('[data-download-update]');
-    const installUpdate = panel.querySelector('[data-install-update]');
     const autoUpdateToggle = panel.querySelector('[data-auto-update]');
-    const releaseSelect = panel.querySelector('[data-release-version]');
-    const openRelease = panel.querySelector('[data-open-release]');
     const updateInfo = await window.desktopAPI?.getUpdateStatus();
-    updateChannel.value = updateInfo?.channel || 'stable';
     updateStatus.textContent = '';
-    autoUpdateToggle.checked = Boolean(updateInfo?.autoUpdate);
-    autoUpdateToggle.onchange = async () => {
-      const next = await window.desktopAPI?.setAutoUpdate(autoUpdateToggle.checked);
-      autoUpdateToggle.checked = Boolean(next?.autoUpdate);
-      updateStatus.textContent = autoUpdateToggle.checked ? '自动更新已开启' : '自动更新已关闭';
+    const setAutoUpdateState = (enabled) => {
+      autoUpdateToggle.setAttribute('aria-pressed', String(Boolean(enabled)));
+      autoUpdateToggle.classList.toggle('is-enabled', Boolean(enabled));
     };
-    updateChannel.onchange = async () => {
-      const next = await window.desktopAPI?.setUpdateChannel(updateChannel.value);
-      updateStatus.textContent = `当前版本 ${next?.version || updateInfo?.version || '未知'} · ${next?.channel === 'beta' ? '测试版' : '稳定版'}通道`;
+    setAutoUpdateState(updateInfo?.autoUpdate);
+    autoUpdateToggle.onclick = async () => {
+      const next = await window.desktopAPI?.setAutoUpdate(autoUpdateToggle.getAttribute('aria-pressed') !== 'true');
+      setAutoUpdateState(next?.autoUpdate);
+      updateStatus.textContent = next?.autoUpdate ? '自动更新已开启' : '自动更新已关闭';
     };
     checkUpdate.onclick = async () => {
       updateStatus.textContent = '正在检查更新...';
       const result = await window.desktopAPI?.checkForUpdates();
       if (!result?.ok) updateStatus.textContent = result?.error || '检查更新失败';
-      else if (result.manual && result.available) { updateStatus.textContent = `发现新版本 ${result.updateInfo?.version || ''}`; openRelease.disabled = false; openRelease.onclick = () => window.desktopAPI?.openRelease(result.updateInfo?.url); }
+      else if (result.manual && result.available) updateStatus.textContent = `发现新版本 ${result.updateInfo?.version || ''}`;
+      else if (result.manual) onToast('当前已是最新版本');
     };
-    downloadUpdate.onclick = async () => { updateStatus.textContent = '正在下载更新...'; await window.desktopAPI?.downloadUpdate(); };
-    installUpdate.onclick = () => window.desktopAPI?.installUpdate();
-    const releaseResult = await window.desktopAPI?.listReleases();
-    if (releaseResult?.ok) {
-      releaseSelect.replaceChildren(...releaseResult.releases.map((release) => { const option = document.createElement('option'); option.value = release.url; option.textContent = `${release.version}${release.prerelease ? ' · 测试版' : ' · 稳定版'}`; return option; }));
-      if (!releaseResult.releases.length) releaseSelect.replaceChildren(Object.assign(document.createElement('option'), { textContent: '暂无可用版本' }));
-      openRelease.disabled = !releaseSelect.value;
-      releaseSelect.onchange = () => { openRelease.disabled = !releaseSelect.value; };
-      openRelease.onclick = async () => { if (releaseSelect.value) await window.desktopAPI?.openRelease(releaseSelect.value); };
-    } else {
-      releaseSelect.replaceChildren(Object.assign(document.createElement('option'), { textContent: '版本列表读取失败' }));
-    }
     const stopUpdateEvents = window.desktopAPI?.onUpdateEvent((name, payload) => {
       if (!panel.isConnected) { stopUpdateEvents?.(); return; }
-      if (name === 'available') { updateStatus.textContent = `发现新版本 ${payload.version}`; downloadUpdate.hidden = false; }
+      if (name === 'available') { updateStatus.textContent = `发现新版本 ${payload.version}`; showUpdatePrompt(payload); }
       if (name === 'none') updateStatus.textContent = `已是最新版本 ${payload.version || ''}`;
       if (name === 'progress') updateStatus.textContent = `正在下载 ${Math.round(payload.percent || 0)}%`;
-      if (name === 'downloaded') { updateStatus.textContent = `版本 ${payload.version} 已下载`; downloadUpdate.hidden = true; installUpdate.hidden = false; }
+      if (name === 'downloaded') { updateStatus.textContent = `版本 ${payload.version} 已下载`; }
       if (name === 'error') updateStatus.textContent = `更新失败：${payload.message}`;
     });
     const mcpToggle = panel.querySelector('[data-mcp-toggle]');
@@ -224,5 +226,5 @@ export function createThemeController({ onToast }) {
     requestAnimationFrame(positionPanel);
   }
 
-  return { openPanel, closePanel: () => closeActivePanel?.(), getTheme: () => ({ ...theme }) };
+  return { openPanel, closePanel: () => closeActivePanel?.(), showUpdatePrompt, getTheme: () => ({ ...theme }) };
 }
