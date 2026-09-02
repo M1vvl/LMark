@@ -50,6 +50,18 @@ LMark 将程序与用户资料明确分开。应用更新只替换程序文件�
 - 内置 MCP 服务，可搜索、读取、创建和追加本地笔记
 - 工作区与休闲区切换
 - 小恐龙和俄罗斯方块小游戏
+- 环球区 StarMap：将项目放入 `Global/StarMap`，在环球区点击“启动 StarMap”即可运行
+
+### 环球区 Token
+
+StarMap 的地图服务 Token 不属于 LMark，也不会写进发布包。需要地图服务时，在 `Global/StarMap/01_Web/.env.local` 中填写：
+
+```ini
+VITE_CESIUM_ION_TOKEN=你的 Cesium ion Token
+VITE_TIANDITU_TOKEN=你的天地图 Token
+```
+
+Cesium ion Token 可在 <https://ion.cesium.com/tokens> 申请，天地图 Token 可在 <https://console.tianditu.gov.cn/api/register> 申请。留空时 StarMap 仍可使用本地低清图源。不要把 `.env.local` 提交到 GitHub。
 
 ## 使用便携版
 
