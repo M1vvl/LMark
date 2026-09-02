@@ -53,8 +53,24 @@ export function createGlobalController({ onToast }) {
     frame.src = frameUrl(frame.src || STARMAP_URL);
     if (status) status.textContent = '正在连接 StarMap…';
   };
-  cesiumToken?.addEventListener('change', (event) => { localStorage.setItem('lmark.cesium-token', event.target.value.trim()); reloadMap(); });
-  tiandituToken?.addEventListener('change', (event) => { localStorage.setItem('lmark.tianditu-token', event.target.value.trim()); reloadMap(); });
+  let tokenReloadTimer;
+  const handleTokenInput = (provider, event) => {
+    const value = event.target.value.trim();
+    localStorage.setItem(provider === 'cesium' ? 'lmark.cesium-token' : 'lmark.tianditu-token', value);
+    // Entering a token implicitly selects its provider. A short debounce keeps
+    // typing responsive while still applying the new credential promptly.
+    if (value) {
+      mapSource = provider;
+      localStorage.setItem(MAP_SOURCE_KEY, mapSource);
+      updateSourceButtons();
+    }
+    clearTimeout(tokenReloadTimer);
+    tokenReloadTimer = setTimeout(() => {
+      if (frame.src) reloadMap();
+    }, 420);
+  };
+  cesiumToken?.addEventListener('input', (event) => handleTokenInput('cesium', event));
+  tiandituToken?.addEventListener('input', (event) => handleTokenInput('tianditu', event));
   sourceButtons.forEach((button) => button.addEventListener('click', () => {
     const next = button.dataset.globalMapSource;
     if (!['cesium', 'tianditu'].includes(next) || next === mapSource) return;
