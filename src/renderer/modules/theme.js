@@ -67,7 +67,6 @@ export function createThemeController({ onToast }) {
     overlay.querySelector('[data-update-confirm]').onclick = async () => {
       const button = overlay.querySelector('[data-update-confirm]');
       button.disabled = true;
-      if (payload.manual && payload.url) { await window.desktopAPI?.openRelease(payload.url); close(); return; }
       button.textContent = '正在下载...';
       const result = await window.desktopAPI?.downloadUpdate();
       if (!result?.ok) { button.disabled = false; button.textContent = '重试更新'; onToast(result?.error || '更新下载失败'); }
@@ -193,8 +192,10 @@ export function createThemeController({ onToast }) {
       updateStatus.textContent = '正在检查更新...';
       const result = await window.desktopAPI?.checkForUpdates();
       if (!result?.ok) updateStatus.textContent = result?.error || '检查更新失败';
-      else if (result.manual && result.available) updateStatus.textContent = `发现新版本 ${result.updateInfo?.version || ''}`;
-      else if (result.manual) onToast('当前已是最新版本');
+      else if (result.available) {
+        updateStatus.textContent = `发现新版本 ${result.updateInfo?.version || ''}`;
+        showUpdatePrompt(result.updateInfo || {});
+      } else if (result.manual) onToast('当前已是最新版本');
     };
     const stopUpdateEvents = window.desktopAPI?.onUpdateEvent((name, payload) => {
       if (!panel.isConnected) { stopUpdateEvents?.(); return; }

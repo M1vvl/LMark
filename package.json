@@ -14,6 +14,7 @@
     "release:validate": "node scripts/release/validate-release.cjs",
     "release:check": "npm run privacy:audit && npm run release:validate",
     "dist:dir": "npm run privacy:audit && electron-builder --win dir -c build/electron-builder.config.cjs",
+    "release:portable": "node scripts/release/create-portable.cjs",
     "dist:setup": "npm run privacy:audit && electron-builder --win nsis -c build/electron-builder.config.cjs --publish never",
     "release:publish": "electron-builder --win nsis -c build/electron-builder.config.cjs --publish always"
   },

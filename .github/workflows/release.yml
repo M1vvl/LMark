@@ -17,6 +17,7 @@ jobs:
       - run: npm run release:check
       - run: npm test
       - run: npm run dist:setup
+      - run: npm run release:portable
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
@@ -27,5 +28,6 @@ jobs:
             release-publish/*.exe
             release-publish/*.blockmap
             release-publish/latest*.yml
+            release-publish/*Portable*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
