@@ -11,7 +11,7 @@ module.exports = {
   asarUnpack: ['src/main/mcp-server.js'],
   files: ['src/**/*', 'package.json', 'README.md'],
   directories: { output: 'release-publish' },
-  win: { signAndEditExecutable: false, target: [{ target: 'nsis', arch: ['x64'] }] },
+  win: { icon: 'src/renderer/assets/lmark-logo.png', signAndEditExecutable: false, target: [{ target: 'nsis', arch: ['x64'] }] },
   nsis: {
     oneClick: false,
     allowToChangeInstallationDirectory: true,
