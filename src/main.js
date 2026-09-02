@@ -822,6 +822,14 @@ function registerIpcHandlers() {
     try { const root = await ensureGlobalRoot(); await shell.openPath(root); return { ok: true, path: root }; }
     catch (error) { return { ok: false, error: error.message }; }
   });
+  ipcMain.handle('shell:open-external', async (_event, value) => {
+    try {
+      const target = new URL(String(value || ''));
+      if (target.protocol !== 'https:') return { ok: false, error: '仅允许打开 HTTPS 链接' };
+      await shell.openExternal(target.toString());
+      return { ok: true };
+    } catch (error) { return { ok: false, error: error.message }; }
+  });
   ipcMain.handle('global:starmap-status', async () => ({ ok: true, available: await isStarMapAvailable(), url: STARMAP_URL }));
   ipcMain.handle('global:start-starmap', async () => {
     try { return await startGlobalStarMap(); }

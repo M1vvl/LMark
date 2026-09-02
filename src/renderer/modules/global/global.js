@@ -63,6 +63,12 @@ export function createGlobalController({ onToast }) {
     updateSourceButtons();
     reloadMap();
   }));
+  document.querySelectorAll('.global-token-link').forEach((link) => link.addEventListener('click', async (event) => {
+    event.preventDefault();
+    const url = link.getAttribute('href');
+    const result = await window.desktopAPI?.openExternal?.(url);
+    if (!result?.ok) onToast(result?.error || '无法打开申请页面');
+  }));
 
   const setLoaded = (value) => {
     loaded = Boolean(value);

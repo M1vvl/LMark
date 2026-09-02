@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('desktopAPI', Object.freeze({
   getProjectRoot: () => ipcRenderer.invoke('settings:get-project-root'),
   setProjectRoot: (folderPath) => ipcRenderer.invoke('settings:set-project-root', folderPath),
   openGlobalFolder: () => ipcRenderer.invoke('global:open-folder'),
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
   globalStarMapStatus: () => ipcRenderer.invoke('global:starmap-status'),
   startGlobalStarMap: () => ipcRenderer.invoke('global:start-starmap'),
   getUpdateStatus: () => ipcRenderer.invoke('update:get-status'),
