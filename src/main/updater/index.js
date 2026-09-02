@@ -17,6 +17,12 @@ function createUpdater({ app, getMainWindow, log = () => {} }) {
     const mainWindow = getMainWindow();
     if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(`update:${event}`, payload);
   };
+  async function latestRelease() {
+    const response = await fetch('https://api.github.com/repos/M1vvl/LMark/releases?per_page=20', { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'LMark-Updater' }, signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
+    const releases = await response.json();
+    return releases.find((release) => !release.draft && (channel === 'beta' || !release.prerelease)) || null;
+  }
   function configure(nextChannel = 'stable', options = {}) {
     channel = nextChannel === 'beta' ? 'beta' : 'stable';
     if (typeof options.autoUpdate === 'boolean') autoUpdate = options.autoUpdate;
@@ -45,7 +51,17 @@ function createUpdater({ app, getMainWindow, log = () => {} }) {
       return this.getStatus();
     },
     async check() {
-      if (!configured) return { ok: false, skipped: true, reason: !autoUpdater ? '更新器依赖未安装' : (app.isPackaged ? '更新源未配置' : '开发模式不检查更新') };
+      if (!configured) {
+        try {
+          const release = await latestRelease();
+          if (!release) return { ok: true, manual: true, updateInfo: null };
+          const current = app.getVersion();
+          const available = release.tag_name.replace(/^v/, '') !== current;
+          if (available) send('available', { channel, version: release.tag_name, manual: true, url: release.html_url });
+          else send('none', { channel, version: current });
+          return { ok: true, manual: true, available, updateInfo: available ? { version: release.tag_name, releaseName: release.name, url: release.html_url } : null };
+        } catch (error) { return { ok: false, error: error.message }; }
+      }
       try { const result = await autoUpdater.checkForUpdates(); return { ok: true, updateInfo: result?.updateInfo || null }; }
       catch (error) { log('Update check failed', error); return { ok: false, error: error.message }; }
     },

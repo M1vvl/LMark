@@ -159,6 +159,7 @@ body.light-theme .system-card { background: rgba(255,255,255,.58); }
 .language-choice { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-input); }
 .language-choice button { min-width: 70px; height: 27px; padding: 0 8px; color: var(--text-muted); border-radius: 999px; background: transparent; font-size: 10px; }
 .language-choice button:hover { color: var(--text); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.language-choice button.is-selected { color: var(--text); background: color-mix(in srgb, var(--accent) 22%, var(--bg-input)); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px rgba(255,255,255,.14); transform: translateY(-1px); }
 .wallpaper-row { align-items: flex-start; }
 .wallpaper-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .wallpaper-row .ghost-button { height: 28px; padding: 0 9px; font-size: 11px; }

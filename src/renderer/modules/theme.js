@@ -71,7 +71,7 @@ export function createThemeController({ onToast }) {
     const fullSettings = `<button class="settings-section-toggle jelly-settings-button" type="button" data-theme-toggle aria-expanded="${expandTheme}"><span class="settings-section-glyph" aria-hidden="true">◐</span><span>主题设置</span><span class="settings-section-chevron" aria-hidden="true">⌄</span></button><div data-theme-collapsible ${expandTheme ? '' : 'hidden'}>${themeControls}</div>
       <div class="setting-row project-location-row"><div><span>默认项目保存位置</span><small data-project-root>正在读取位置...</small></div><button class="jelly-settings-button compact" data-change-project-root>文件位置修改</button></div>
       <div class="setting-row language-setting-row"><div><span>语言</span><small>切换软件界面语言</small></div><div class="language-choice" role="group"><button type="button" data-language="zh-CN">简体中文</button><button type="button" data-language="en">English</button></div></div>
-      <div class="setting-row update-setting-row"><div><span>软件更新</span><small data-update-status>正在读取版本...</small></div><div class="update-actions"><select data-update-channel aria-label="更新通道"><option value="stable">稳定版</option><option value="beta">测试版</option></select><label class="update-toggle"><input type="checkbox" data-auto-update /><span>自动更新</span></label><button class="jelly-settings-button compact" data-check-update>检查更新</button><button class="jelly-settings-button compact" data-download-update hidden>下载</button><button class="jelly-settings-button compact" data-install-update hidden>重启安装</button></div></div>
+      <div class="setting-row update-setting-row"><div><span>软件更新</span><small data-update-status></small></div><div class="update-actions"><select data-update-channel aria-label="更新通道"><option value="stable">稳定版</option><option value="beta">测试版</option></select><label class="update-toggle"><input type="checkbox" data-auto-update /><span>自动更新</span></label><button class="jelly-settings-button compact" data-check-update>检查更新</button><button class="jelly-settings-button compact" data-download-update hidden>下载</button><button class="jelly-settings-button compact" data-install-update hidden>重启安装</button></div></div>
       <div class="setting-row release-choice-row"><div><span>选择版本</span><small>查看 GitHub Releases，下载指定版本</small></div><div class="update-actions"><select data-release-version aria-label="选择版本"><option value="">读取版本...</option></select><button class="jelly-settings-button compact" data-open-release disabled>打开下载页</button></div></div>
       <button class="settings-section-toggle jelly-settings-button" type="button" data-mcp-toggle aria-expanded="false"><span class="settings-section-glyph" aria-hidden="true">⌘</span><span>MCP 本地知识服务</span><span class="settings-section-chevron" aria-hidden="true">⌄</span></button>
       <div class="mcp-settings-body" data-mcp-body hidden><p class="settings-help">外部 MCP 客户端可以通过只读搜索、读取、创建、更新和追加工具访问当前项目。更新操作支持文件修改时间冲突保护。</p><code data-mcp-command>正在读取命令...</code><button class="jelly-settings-button compact" data-copy-mcp>复制 MCP 启动命令</button></div>`;
@@ -142,7 +142,8 @@ export function createThemeController({ onToast }) {
       onToast(result.fallback ? '当前场景壁纸已使用预览图作为软件主题' : `已应用当前壁纸：${wallpaper.title}`);
     };
     panel.querySelector('[data-reset-theme]').onclick = () => { theme = { ...DEFAULT_THEME }; persistTheme(theme); applyTheme(theme); close(); onToast('已恢复默认主题'); };
-    panel.querySelectorAll('[data-language]').forEach((button) => button.addEventListener('click', () => { localStorage.setItem('lmark.locale', button.dataset.language); location.reload(); }));
+    const activeLocale = localStorage.getItem('lmark.locale') || 'zh-CN';
+    panel.querySelectorAll('[data-language]').forEach((button) => { button.classList.toggle('is-selected', button.dataset.language === activeLocale); button.addEventListener('click', () => { localStorage.setItem('lmark.locale', button.dataset.language); location.reload(); }); });
     if (themeOnly) { requestAnimationFrame(positionPanel); return; }
     const projectRootLabel = panel.querySelector('[data-project-root]');
     window.desktopAPI?.getProjectRoot().then((result) => { if (result?.ok) projectRootLabel.textContent = result.path; }).catch(() => { projectRootLabel.textContent = '读取失败'; });
@@ -164,7 +165,7 @@ export function createThemeController({ onToast }) {
     const openRelease = panel.querySelector('[data-open-release]');
     const updateInfo = await window.desktopAPI?.getUpdateStatus();
     updateChannel.value = updateInfo?.channel || 'stable';
-    updateStatus.textContent = `当前版本 ${updateInfo?.version || '未知'}${updateInfo?.packaged ? '' : ' · 开发模式'}`;
+    updateStatus.textContent = '';
     autoUpdateToggle.checked = Boolean(updateInfo?.autoUpdate);
     autoUpdateToggle.onchange = async () => {
       const next = await window.desktopAPI?.setAutoUpdate(autoUpdateToggle.checked);
@@ -178,7 +179,8 @@ export function createThemeController({ onToast }) {
     checkUpdate.onclick = async () => {
       updateStatus.textContent = '正在检查更新...';
       const result = await window.desktopAPI?.checkForUpdates();
-      if (!result?.ok) updateStatus.textContent = result?.reason || result?.error || '检查更新失败';
+      if (!result?.ok) updateStatus.textContent = result?.error || '检查更新失败';
+      else if (result.manual && result.available) { updateStatus.textContent = `发现新版本 ${result.updateInfo?.version || ''}`; openRelease.disabled = false; openRelease.onclick = () => window.desktopAPI?.openRelease(result.updateInfo?.url); }
     };
     downloadUpdate.onclick = async () => { updateStatus.textContent = '正在下载更新...'; await window.desktopAPI?.downloadUpdate(); };
     installUpdate.onclick = () => window.desktopAPI?.installUpdate();
