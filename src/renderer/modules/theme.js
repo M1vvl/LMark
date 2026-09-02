@@ -89,6 +89,7 @@ export function createThemeController({ onToast }) {
       </div>`;
     const fullSettings = `<button class="settings-section-toggle jelly-settings-button" type="button" data-theme-toggle aria-expanded="${expandTheme}"><span class="settings-section-glyph" aria-hidden="true">◐</span><span>主题设置</span><span class="settings-section-chevron" aria-hidden="true">⌄</span></button><div data-theme-collapsible ${expandTheme ? '' : 'hidden'}>${themeControls}</div>
       <div class="setting-row project-location-row"><div><span>默认项目保存位置</span><small data-project-root>正在读取位置...</small></div><button class="jelly-settings-button compact" data-change-project-root>文件位置修改</button></div>
+      <div class="settings-subsection"><strong>环球区地图服务</strong><small>每位用户可自行申请并填写 Token；留空时使用 StarMap 的本地数据源。</small><label class="setting-row"><span>Cesium ion Token</span><input class="url-input" type="password" data-cesium-token placeholder="可选" autocomplete="off" /></label><a class="settings-help-link" href="https://ion.cesium.com/tokens" target="_blank" rel="noreferrer">申请 Cesium ion Token</a><label class="setting-row"><span>天地图 Token</span><input class="url-input" type="password" data-tianditu-token placeholder="可选" autocomplete="off" /></label><a class="settings-help-link" href="https://console.tianditu.gov.cn/api/register" target="_blank" rel="noreferrer">申请天地图 Token</a><small>填写后保存在当前 Windows 用户的 LMark 设置中，不会写入发布包。</small></div>
       <div class="setting-row language-setting-row"><div><span>语言</span><small>切换软件界面语言</small></div><div class="language-choice" role="group"><button type="button" data-language="zh-CN">简体中文</button><button type="button" data-language="en">English</button></div></div>
       <div class="setting-row update-setting-row"><div><span>软件更新</span><small data-update-status></small></div><div class="update-actions"><button class="update-toggle" type="button" data-auto-update aria-pressed="false">自动更新</button><button class="jelly-settings-button compact" data-check-update>检查更新</button></div></div>
       <button class="settings-section-toggle jelly-settings-button" type="button" data-mcp-toggle aria-expanded="false"><span class="settings-section-glyph" aria-hidden="true">⌘</span><span>MCP 本地知识服务</span><span class="settings-section-chevron" aria-hidden="true">⌄</span></button>
@@ -118,6 +119,10 @@ export function createThemeController({ onToast }) {
     panel.querySelector('[data-mode]').value = theme.mode;
     panel.querySelector('[data-accent]').value = theme.accent;
     panel.querySelector('[data-wallpaper-url]').value = theme.wallpaperSourceUrl || (theme.wallpaperType === 'url' ? theme.wallpaper : '');
+    const cesiumTokenInput = panel.querySelector('[data-cesium-token]');
+    const tiandituTokenInput = panel.querySelector('[data-tianditu-token]');
+    if (cesiumTokenInput) cesiumTokenInput.value = localStorage.getItem('lmark.cesium-token') || '';
+    if (tiandituTokenInput) tiandituTokenInput.value = localStorage.getItem('lmark.tianditu-token') || '';
     panel.querySelector('[data-close-theme]').onclick = close;
     const themeToggle = panel.querySelector('[data-theme-toggle]');
     if (themeToggle) themeToggle.onclick = () => {
@@ -160,6 +165,8 @@ export function createThemeController({ onToast }) {
       onToast(result.fallback ? '当前场景壁纸已使用预览图作为软件主题' : `已应用当前壁纸：${wallpaper.title}`);
     };
     panel.querySelector('[data-reset-theme]').onclick = () => { theme = { ...DEFAULT_THEME }; persistTheme(theme); applyTheme(theme); close(); onToast('已恢复默认主题'); };
+    cesiumTokenInput?.addEventListener('change', (event) => localStorage.setItem('lmark.cesium-token', event.target.value.trim()));
+    tiandituTokenInput?.addEventListener('change', (event) => localStorage.setItem('lmark.tianditu-token', event.target.value.trim()));
     const activeLocale = localStorage.getItem('lmark.locale') || 'zh-CN';
     panel.querySelectorAll('[data-language]').forEach((button) => { button.classList.toggle('is-selected', button.dataset.language === activeLocale); button.addEventListener('click', () => { localStorage.setItem('lmark.locale', button.dataset.language); location.reload(); }); });
     if (themeOnly) { requestAnimationFrame(positionPanel); return; }

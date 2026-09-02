@@ -42,6 +42,7 @@ createMenuController({ onAction: (action) => {
   else if (action === 'analyze') openDocumentForAnalysis();
   else if (action === 'language-zh') i18n.setLocale('zh-CN');
   else if (action === 'language-en') i18n.setLocale('en');
+  else if (action === 'feedback') showToast('Email: 1070764333@qq.com · QQ: 1070764333 · WeChat: _9C2cyo');
   else showToast(i18n.t('功能已就绪', 'Ready'));
 } });
 

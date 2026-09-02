@@ -28,7 +28,7 @@ let globalStarMapProcess;
 let startupLogPath;
 let updater;
 const PROJECT_ROOT_SETTING = 'projectRootPath';
-const GLOBAL_ROOT_NAME = '环球区';
+const GLOBAL_ROOT_NAME = 'Global';
 const STARMAP_URL = 'http://127.0.0.1:5173/';
 const WORKSPACE_MARKER = '.codex-workbar.json';
 const KNOWLEDGE_EXTENSIONS = new Set(['.md', '.markdown', '.txt']);
