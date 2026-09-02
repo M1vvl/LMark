@@ -43,7 +43,8 @@ export function createWorkspaceController({ onToast }) {
   const modeLabel = document.getElementById('workspaceModeLabel');
   const modes = [
     { id: 'work', label: '工作区', description: '项目、文件和专注任务' },
-    { id: 'leisure', label: '休闲区', description: '轻量浏览和灵感整理' }
+    { id: 'leisure', label: '休闲区', description: '轻量浏览和灵感整理' },
+    { id: 'global', label: '环球区', description: '全球工具、地图与外部项目' }
   ];
   let modeMenu;
   let currentMode = localStorage.getItem(MODE_KEY) || 'work';
