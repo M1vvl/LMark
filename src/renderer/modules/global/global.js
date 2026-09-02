@@ -61,11 +61,7 @@ export function createGlobalController({ onToast }) {
   document.addEventListener('workspace:mode-changed', (event) => {
     const global = event.detail?.mode === 'global';
     stage.hidden = !global;
-    if (global && !loaded && !frame.src) {
-      window.desktopAPI?.globalStarMapStatus?.().then((result) => {
-        if (result?.ok && result.available) loadFrame();
-      }).catch(() => {});
-    }
+    if (global && !loaded && !launching) launch();
   });
-  if (document.body.dataset.workspaceMode === 'global') stage.hidden = false;
+  if (document.body.dataset.workspaceMode === 'global') { stage.hidden = false; launch(); }
 }
