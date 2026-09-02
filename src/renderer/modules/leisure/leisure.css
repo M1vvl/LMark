@@ -1,6 +1,11 @@
 .leisure-sidebar { min-height: 0; display: grid; gap: 8px; padding: 20px 4px 0; animation: leisure-fade-in .24s ease both; }
 body[data-workspace-mode="leisure"] .welcome-view, body[data-workspace-mode="leisure"] #knowledgePanel, body[data-workspace-mode="leisure"] .document-viewer { display: none !important; }
 body[data-workspace-mode="global"] .workspace-panel { min-width: 0; width: 0; flex: 0 0 0; padding: 0; border-right: 0; overflow: visible; }
+body[data-workspace-mode="global"] .workspace-layout { position: relative; }
+body[data-workspace-mode="global"] .workspace-panel { position: relative; z-index: 60; pointer-events: none; }
+body[data-workspace-mode="global"] .workspace-panel.is-hidden { display: flex; }
+body[data-workspace-mode="global"] .workspace-panel .panel-heading,
+body[data-workspace-mode="global"] .workspace-panel .workspace-mode-button { pointer-events: auto; }
 body[data-workspace-mode="global"] .workspace-panel > :not(.panel-heading) { display: none !important; }
 body[data-workspace-mode="global"] .panel-heading { position: fixed; top: 49px; left: 10px; z-index: 30; height: auto; min-height: 0; display: flex; align-items: flex-start; justify-content: center; padding: 0; border-bottom: 0; }
 body[data-workspace-mode="global"] .workspace-mode-button { width: 70px; justify-content: center; }

@@ -214,9 +214,14 @@ function startGlobalStarMapServer(distRoot) {
 }
 
 async function startGlobalStarMap() {
-  if (await isStarMapAvailable()) return { ok: true, url: globalStarMapServerUrl || STARMAP_URL, started: false };
   const distRoot = findStarMapDist();
-  if (distRoot) return { ok: true, url: await startGlobalStarMapServer(distRoot), started: true, static: true };
+  // Prefer the bundled build so a stale development server on port 5173
+  // cannot hijack the Global view in the portable release.
+  if (distRoot) {
+    const url = await startGlobalStarMapServer(distRoot);
+    return { ok: true, url, started: true, static: true };
+  }
+  if (await isStarMapAvailable()) return { ok: true, url: globalStarMapServerUrl || STARMAP_URL, started: false };
   const root = findStarMapRoot();
   if (!root) throw new Error('没有找到 Global\\StarMap\\01_Web，请先把 StarMap 放入 Global 文件夹');
   if (!globalStarMapProcess || globalStarMapProcess.exitCode !== null) {

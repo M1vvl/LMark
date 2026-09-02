@@ -11,7 +11,7 @@ export function createGlobalController({ onToast }) {
   const mapSettings = document.getElementById('globalMapSettings');
   const cesiumToken = document.getElementById('globalCesiumToken');
   const tiandituToken = document.getElementById('globalTiandituToken');
-  if (!stage || !frame || !placeholder || !status) return;
+  if (!stage || !frame || !placeholder) return;
   if (cesiumToken) cesiumToken.value = localStorage.getItem('lmark.cesium-token') || '';
   if (tiandituToken) tiandituToken.value = localStorage.getItem('lmark.tianditu-token') || '';
   mapSettingsButton?.addEventListener('click', () => {
@@ -28,18 +28,18 @@ export function createGlobalController({ onToast }) {
     loaded = Boolean(value);
     frame.hidden = !loaded;
     placeholder.hidden = loaded;
-    status.textContent = loaded ? 'StarMap 已连接' : 'StarMap 尚未启动';
+    if (status) status.textContent = loaded ? 'StarMap 已连接' : 'StarMap 尚未启动';
     launchButtons.forEach((button) => { button.textContent = loaded ? '重新加载 StarMap' : '启动 StarMap'; button.disabled = false; });
   };
   const loadFrame = (url = STARMAP_URL) => {
     frame.src = `${url}${url.includes('?') ? '&' : '?'}lmark=${Date.now()}`;
-    status.textContent = '正在连接 StarMap…';
+    if (status) status.textContent = '正在连接 StarMap…';
   };
   const launch = async () => {
     if (launching) return;
     launching = true;
     launchButtons.forEach((button) => { button.disabled = true; button.textContent = '正在启动…'; });
-    status.textContent = '正在启动 StarMap…';
+    if (status) status.textContent = '正在启动 StarMap…';
     try {
       const result = await window.desktopAPI?.startGlobalStarMap();
       if (!result?.ok) throw new Error(result?.error || 'StarMap 启动失败');
