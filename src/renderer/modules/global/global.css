@@ -11,8 +11,16 @@
 .global-map-settings-button:hover, .global-map-settings-button[aria-expanded="true"] { color: var(--text); border-color: color-mix(in srgb, var(--accent) 48%, var(--line)); background: color-mix(in srgb, var(--accent) 14%, var(--bg-elevated)); }
 .global-map-settings { position: absolute; top: 50px; right: 14px; z-index: 6; width: 270px; display: grid; gap: 8px; padding: 14px; color: var(--text-muted); border: 1px solid var(--line-strong); border-radius: 10px; background: color-mix(in srgb, var(--bg-elevated) 95%, transparent); box-shadow: 0 18px 44px rgba(0,0,0,.3); backdrop-filter: blur(24px); font-size: 10px; }
 .global-map-settings strong { color: var(--text); font-size: 12px; }
+.global-map-source-toggle { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.global-map-source-toggle button { min-height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--text-muted); border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--bg-input) 82%, transparent); font-size: 11px; transition: transform .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease; }
+.global-map-source-toggle button:hover { color: var(--text); border-color: color-mix(in srgb, var(--accent) 42%, var(--line)); transform: translateY(-1px); }
+.global-map-source-toggle button.is-active { color: var(--text); border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); background: color-mix(in srgb, var(--accent) 15%, var(--bg-elevated)); box-shadow: 0 5px 12px color-mix(in srgb, var(--accent) 20%, transparent), inset 0 1px 0 color-mix(in srgb, white 45%, transparent); transform: translateY(-1px); }
+.global-toggle-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: .45; }
+.global-map-source-toggle button.is-active .global-toggle-dot { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 10px var(--accent); }
+.global-token-field { display: grid; gap: 4px; }
 .global-map-settings label { display: grid; gap: 4px; }
 .global-map-settings input { height: 30px; padding: 0 8px; color: var(--text); border: 1px solid var(--line); border-radius: 6px; background: var(--bg-input); }
-.global-map-settings a { color: var(--accent); }
+.global-token-link { width: fit-content; color: #4f8cff; text-decoration: none; }
+.global-token-link:hover { color: #78a9ff; text-decoration: underline; }
 .folder-glyph { position: relative; display: block; width: 15px; height: 11px; border: 1.5px solid currentColor; border-radius: 2px; }
 .folder-glyph::before { content: ''; position: absolute; left: 1px; top: -4px; width: 7px; height: 4px; border: 1.5px solid currentColor; border-bottom: 0; border-radius: 2px 2px 0 0; }
