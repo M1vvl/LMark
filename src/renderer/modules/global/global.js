@@ -37,6 +37,7 @@ export function createGlobalController({ onToast }) {
     if (event.target instanceof Node && (mapSettings.contains(event.target) || mapSettingsButton?.contains(event.target))) return;
     closeMapSettings();
   });
+  frame.addEventListener('pointerdown', closeMapSettings);
   let loaded = false;
   let launching = false;
   const frameUrl = (url) => {
