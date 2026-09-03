@@ -1,6 +1,6 @@
 {
   "name": "lmark",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A modular Windows 11 knowledge workspace with standard Markdown notes.",
   "main": "src/main.js",
   "author": "Codex",
@@ -29,4 +29,3 @@
     "electron-updater": "^6.8.9"
   }
 }
-
