@@ -184,7 +184,7 @@ function findStarMapDist() {
   return roots.find((root) => fs.existsSync(path.join(root, 'index.html')));
 }
 
-function startGlobalStarMapServer(distRoot) {
+async function startGlobalStarMapServer(distRoot) {
   if (globalStarMapServer && globalStarMapServerUrl) return Promise.resolve(globalStarMapServerUrl);
   const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.wasm': 'application/wasm' };
   globalStarMapServer = http.createServer(async (request, response) => {
@@ -202,15 +202,31 @@ function startGlobalStarMapServer(distRoot) {
     } catch { response.writeHead(500); response.end('StarMap server error'); }
   });
   globalStarMapServer.on('error', (error) => logStartup('StarMap static server failed', error));
-  return new Promise((resolve, reject) => {
-    globalStarMapServer.once('error', reject);
-    globalStarMapServer.listen(0, '127.0.0.1', () => {
+  const listen = (port) => new Promise((resolve, reject) => {
+    const handleError = (error) => {
+      globalStarMapServer.removeListener('listening', handleListening);
+      reject(error);
+    };
+    const handleListening = () => {
+      globalStarMapServer.removeListener('error', handleError);
       const address = globalStarMapServer.address();
-      const port = typeof address === 'object' && address ? address.port : 0;
-      globalStarMapServerUrl = `http://127.0.0.1:${port}/`;
+      const actualPort = typeof address === 'object' && address ? address.port : 0;
+      globalStarMapServerUrl = `http://127.0.0.1:${actualPort}/`;
       resolve(globalStarMapServerUrl);
-    });
+    };
+    globalStarMapServer.once('error', handleError);
+    globalStarMapServer.once('listening', handleListening);
+    globalStarMapServer.listen(port, '127.0.0.1');
   });
+  try {
+    // A stable origin keeps embedded StarMap's private browser profile across
+    // restarts. Fall back when a developer server already owns this port.
+    return await listen(5173);
+  } catch (error) {
+    if (error?.code !== 'EADDRINUSE') throw error;
+    await new Promise((resolve) => globalStarMapServer.close(resolve));
+    return listen(0);
+  }
 }
 
 async function startGlobalStarMap() {
