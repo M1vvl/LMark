@@ -26,7 +26,7 @@ test('settings migration removes plaintext API keys and records schema version',
   assert.equal(migrated.schemaVersion, SETTINGS_VERSION);
   assert.equal(migrated.aiConfiguration.apiKey, undefined);
   assert.equal(migrated.aiConfiguration.encryptedApiKey, 'ciphertext');
-  assert.equal(migrated.autoUpdate, false);
+  assert.equal(migrated.autoUpdate, true);
 });
 
 test('settings migration preserves an explicit automatic update preference', () => {

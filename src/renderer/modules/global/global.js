@@ -10,19 +10,43 @@ export function createGlobalController({ onToast }) {
   const openFolderButton = document.getElementById('openGlobalFolderButton');
   const mapSettingsButton = document.getElementById('globalMapSettingsButton');
   const mapSettings = document.getElementById('globalMapSettings');
+  const cesiumTutorialButton = document.getElementById('globalCesiumTutorialButton');
   const cesiumToken = document.getElementById('globalCesiumToken');
   const tiandituToken = document.getElementById('globalTiandituToken');
   const sourceButtons = [...document.querySelectorAll('[data-global-map-source]')];
   if (!stage || !frame || !placeholder) return;
-  if (cesiumToken) cesiumToken.value = localStorage.getItem('lmark.cesium-token') || '';
-  if (tiandituToken) tiandituToken.value = localStorage.getItem('lmark.tianditu-token') || '';
-  let mapSource = ['cesium', 'tianditu'].includes(localStorage.getItem(MAP_SOURCE_KEY)) ? localStorage.getItem(MAP_SOURCE_KEY) : 'cesium';
+  const legacyCesiumToken = localStorage.getItem('lmark.cesium-token') || '';
+  const legacyTiandituToken = localStorage.getItem('lmark.tianditu-token') || '';
+  if (cesiumToken) cesiumToken.value = legacyCesiumToken;
+  if (tiandituToken) tiandituToken.value = legacyTiandituToken;
+  const legacyMapSource = ['cesium', 'tianditu'].includes(localStorage.getItem(MAP_SOURCE_KEY)) ? localStorage.getItem(MAP_SOURCE_KEY) : 'cesium';
+  let mapSource = legacyMapSource;
   const updateSourceButtons = () => sourceButtons.forEach((button) => {
     const active = button.dataset.globalMapSource === mapSource;
     button.classList.toggle('is-active', active);
     button.setAttribute('aria-pressed', String(active));
   });
   updateSourceButtons();
+  const settingsReady = window.desktopAPI?.getGlobalMapSettings?.().then((result) => {
+    if (!result?.ok || !result.settings) return;
+    const saved = result.settings;
+    mapSource = saved.configured && ['cesium', 'tianditu'].includes(saved.mapSource) ? saved.mapSource : legacyMapSource;
+    if (cesiumToken) cesiumToken.value = saved.cesiumToken || legacyCesiumToken;
+    if (tiandituToken) tiandituToken.value = saved.tiandituToken || legacyTiandituToken;
+    localStorage.setItem(MAP_SOURCE_KEY, mapSource);
+    localStorage.setItem('lmark.cesium-token', cesiumToken?.value || '');
+    localStorage.setItem('lmark.tianditu-token', tiandituToken?.value || '');
+    updateSourceButtons();
+    if (!saved.configured && (legacyCesiumToken || legacyTiandituToken || legacyMapSource !== 'cesium')) void persistMapSettings();
+  }).catch(() => undefined) ?? Promise.resolve();
+  const persistMapSettings = async () => {
+    const result = await window.desktopAPI?.setGlobalMapSettings?.({
+      mapSource,
+      cesiumToken: cesiumToken?.value || '',
+      tiandituToken: tiandituToken?.value || '',
+    });
+    if (result && !result.ok) onToast(result.error || '瓦片地图设置保存失败');
+  };
   const closeMapSettings = () => {
     mapSettingsButton?.setAttribute('aria-expanded', 'false');
     if (mapSettings) mapSettings.hidden = true;
@@ -65,6 +89,7 @@ export function createGlobalController({ onToast }) {
     if (status) status.textContent = '正在连接 StarMap…';
   };
   let tokenReloadTimer;
+  let tokenSaveTimer;
   const handleTokenInput = (provider, event) => {
     const value = event.target.value.trim();
     localStorage.setItem(provider === 'cesium' ? 'lmark.cesium-token' : 'lmark.tianditu-token', value);
@@ -76,6 +101,8 @@ export function createGlobalController({ onToast }) {
       updateSourceButtons();
     }
     clearTimeout(tokenReloadTimer);
+    clearTimeout(tokenSaveTimer);
+    tokenSaveTimer = setTimeout(() => { void persistMapSettings(); }, 300);
     tokenReloadTimer = setTimeout(() => {
       if (frame.src) reloadMap();
     }, 420);
@@ -88,8 +115,13 @@ export function createGlobalController({ onToast }) {
     mapSource = next;
     localStorage.setItem(MAP_SOURCE_KEY, mapSource);
     updateSourceButtons();
+    void persistMapSettings();
     reloadMap();
   }));
+  cesiumTutorialButton?.addEventListener('click', async () => {
+    const result = await window.desktopAPI?.openCesiumTutorial?.();
+    if (!result?.ok) onToast(result?.error || '无法打开 Cesium ion 教程');
+  });
   document.querySelectorAll('.global-token-link').forEach((link) => link.addEventListener('click', async (event) => {
     event.preventDefault();
     const url = link.getAttribute('href');
@@ -116,6 +148,7 @@ export function createGlobalController({ onToast }) {
     launchButtons.forEach((button) => { button.disabled = true; button.textContent = '正在启动…'; });
     if (status) status.textContent = '正在启动 StarMap…';
     try {
+      await settingsReady;
       const result = await window.desktopAPI?.startGlobalStarMap();
       if (!result?.ok) throw new Error(result?.error || 'StarMap 启动失败');
       loadFrame(result.url || STARMAP_URL);

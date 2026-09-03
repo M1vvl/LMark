@@ -10,6 +10,10 @@ module.exports = {
   asar: true,
   asarUnpack: ['src/main/mcp-server.js'],
   files: ['src/**/*', 'package.json', 'README.md'],
+  extraFiles: [
+    { from: 'Global/StarMap/01_Web/dist', to: 'Global/StarMap/01_Web/dist' },
+    { from: 'Global/TileMapSettings', to: 'Global/TileMapSettings' }
+  ],
   directories: { output: 'release-publish' },
   win: { icon: 'build/lmark.ico', signExecutable: false, target: [{ target: 'dir', arch: ['x64'] }] },
   publish: owner && repo ? [{ provider: 'github', owner, repo, releaseType: 'draft' }] : undefined

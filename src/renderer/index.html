@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="modules/document-viewer/document-viewer.css" />
     <link rel="stylesheet" href="modules/leisure/leisure.css" />
     <link rel="stylesheet" href="modules/global/global.css" />
+    <link rel="stylesheet" href="modules/onboarding/onboarding.css" />
     <link rel="stylesheet" href="styles/performance.css" />
   </head>
   <body>
@@ -68,10 +69,6 @@
                 <button class="tree-item-main"><span class="file-glyph"></span><span class="tree-item-copy"><strong>欢迎使用</strong><small>LMark</small></span></button>
                 <button class="project-more-button" aria-label="欢迎使用项目操作" aria-haspopup="menu">···</button>
               </div>
-              <div class="tree-item" data-project-id="learning" data-system-project="true">
-                <button class="tree-item-main"><span class="file-glyph folder"></span><span class="tree-item-copy"><strong>自定义学习</strong><small>本地工作区</small></span></button>
-                <button class="project-more-button" aria-label="自定义学习项目操作" aria-haspopup="menu">···</button>
-              </div>
             </div>
             <div class="project-search-empty" id="projectSearchEmpty" hidden>没有找到匹配的项目</div>
           </div>
@@ -119,7 +116,7 @@
               <span class="global-status" id="globalStatus" hidden>StarMap 尚未启动</span>
               <button class="global-map-settings-button" id="globalMapSettingsButton" type="button" aria-expanded="false">瓦片地图设置</button>
               <div class="global-map-settings" id="globalMapSettings" hidden>
-                <strong>瓦片地图设置</strong><small>Token 仅保存在当前用户的 LMark 设置中。选择图源后会立即应用到 StarMap。</small>
+                <div class="global-map-settings-heading"><strong>瓦片地图设置</strong><button id="globalCesiumTutorialButton" type="button">教程帮助</button></div><small>Token 仅保存在当前用户的 LMark 设置中。选择图源后会立即应用到 StarMap。</small>
                 <div class="global-map-source-toggle" role="group" aria-label="选择地图图源">
                   <button type="button" data-global-map-source="cesium" aria-pressed="false"><span class="global-toggle-dot" aria-hidden="true"></span><span>Cesium</span></button>
                   <button type="button" data-global-map-source="tianditu" aria-pressed="false"><span class="global-toggle-dot" aria-hidden="true"></span><span>天地图</span></button>

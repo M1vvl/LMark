@@ -10,6 +10,7 @@ import { createLeisureController } from './modules/leisure/leisure.js';
 import { createDocumentViewer } from './modules/document-viewer/document-viewer.js';
 import { createI18nController } from './modules/i18n.js';
 import { createGlobalController } from './modules/global/global.js';
+import { createOnboardingController } from './modules/onboarding/onboarding.js';
 
 const toast = document.getElementById('toast');
 let toastTimer;
@@ -29,6 +30,7 @@ const i18n = createI18nController();
 createWorkspaceController({ onToast: showToast });
 createLeisureController({ onToast: showToast });
 createGlobalController({ onToast: showToast });
+const onboarding = createOnboardingController();
 createGelSidebar();
 createWorkspaceBars({ onToast: showToast });
 createAIController({ onToast: showToast });
@@ -43,6 +45,7 @@ createMenuController({ onAction: (action) => {
   else if (action === 'language-zh') i18n.setLocale('zh-CN');
   else if (action === 'language-en') i18n.setLocale('en');
   else if (action === 'feedback') showToast('Email: 1070764333@qq.com · QQ: 1070764333 · WeChat: _9C2cyo');
+  else if (action === 'onboarding') onboarding.openFromHelp();
   else showToast(i18n.t('功能已就绪', 'Ready'));
 } });
 
@@ -66,10 +69,14 @@ async function openDocumentForAnalysis() {
 const themeButton = document.getElementById('themeButton');
 const settingsButton = document.getElementById('settingsButton');
 themeButton.onclick = () => theme.openPanel({ themeOnly: true, expandTheme: true, anchor: themeButton, placement: 'below' });
-document.getElementById('welcomeThemeButton').onclick = (event) => theme.openPanel({ themeOnly: true, expandTheme: true, anchor: event.currentTarget, placement: 'above' });
+document.getElementById('welcomeThemeButton')?.addEventListener('click', (event) => theme.openPanel({ themeOnly: true, expandTheme: true, anchor: event.currentTarget, placement: 'above' }));
 settingsButton.onclick = () => theme.openPanel({ anchor: settingsButton, placement: 'above' });
 document.getElementById('openFileButton')?.addEventListener('click', openFile);
-document.getElementById('welcomeOpenButton').onclick = openFile;
+document.getElementById('welcomeOpenButton')?.addEventListener('click', openFile);
+setTimeout(() => onboarding.maybeOpen(), 450);
+document.addEventListener('workspace:mode-changed', (event) => {
+  if (event.detail?.mode === 'global') setTimeout(() => onboarding.maybeOpenGlobal(), 320);
+});
 
 document.addEventListener('keydown', (event) => {
   if (event.ctrlKey && event.key.toLowerCase() === 'k') { event.preventDefault(); document.querySelector('.workspace-search input').focus(); }

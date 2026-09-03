@@ -62,6 +62,34 @@ function validBaseUrl(value) {
   } catch { return false; }
 }
 
+// Keep the value users copy between providers predictable. The main process
+// accepts either a base URL or a concrete endpoint, but showing one canonical
+// Responses endpoint prevents malformed paths such as `/v1/v1/responses`.
+function normalizeEndpointInput(value) {
+  const trimmed = String(value || '').trim().replace(/\/+$/, '');
+  if (!trimmed) return '';
+  try {
+    const url = new URL(trimmed);
+    url.search = '';
+    url.hash = '';
+    const path = url.pathname.replace(/\/+$/, '');
+    if (/\/chat\/completions$/i.test(path) || /\/responses$/i.test(path)) return url.toString().replace(/\/+$/, '');
+    url.pathname = `${path || ''}${/\/v\d+(?:alpha|beta\d*)?$/i.test(path) ? '' : '/v1'}/responses`;
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    return trimmed;
+  }
+}
+
+function endpointRoot(value) {
+  const normalized = normalizeEndpointInput(value);
+  try {
+    const url = new URL(normalized);
+    url.pathname = url.pathname.replace(/\/(?:responses|chat\/completions)$/i, '');
+    return url.toString().replace(/\/+$/, '');
+  } catch { return normalized; }
+}
+
 function readConversation() {
   try {
     const stored = JSON.parse(localStorage.getItem(CONVERSATION_KEY) || '[]');
@@ -272,7 +300,7 @@ export function createAIController({ onToast }) {
     }));
     const close = () => overlay.remove();
     const updateEndpointPreview = () => {
-      const base = baseUrlInput.value.trim().replace(/\/$/, '');
+      const base = endpointRoot(baseUrlInput.value);
       if (!base) { endpointPreview.textContent = ''; return; }
       const root = /\/v\d+(?:alpha|beta\d*)?$/i.test(base) ? base : `${base}/v1`;
       const protocol = protocolSelect.value;
@@ -284,6 +312,13 @@ export function createAIController({ onToast }) {
     };
     const clearTestStatus = () => { testStatus.textContent = ''; delete testStatus.dataset.state; };
     baseUrlInput.addEventListener('input', () => { baseUrlInput.removeAttribute('aria-invalid'); modelStatus.textContent = ''; clearTestStatus(); updateEndpointPreview(); });
+    baseUrlInput.addEventListener('blur', () => {
+      const normalized = normalizeEndpointInput(baseUrlInput.value);
+      if (normalized && normalized !== baseUrlInput.value.trim()) {
+        baseUrlInput.value = normalized;
+        updateEndpointPreview();
+      }
+    });
     modelInput.addEventListener('input', () => { modelInput.removeAttribute('aria-invalid'); clearTestStatus(); });
     keyInput.addEventListener('input', () => { keyInput.removeAttribute('aria-invalid'); clearTestStatus(); });
     protocolSelect.addEventListener('change', () => { clearTestStatus(); updateEndpointPreview(); });
@@ -292,7 +327,7 @@ export function createAIController({ onToast }) {
       next: {
         provider: 'custom',
         protocol: protocolSelect.value,
-        baseUrl: baseUrlInput.value.trim().replace(/\/$/, ''),
+        baseUrl: normalizeEndpointInput(baseUrlInput.value),
         model: modelInput.value.trim(),
         reasoning: reasoningSelect?.value || settings.reasoning || 'medium'
       },

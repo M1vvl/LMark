@@ -97,8 +97,14 @@ export function createThemeController({ onToast }) {
     document.body.append(panel);
     const close = () => {
       window.removeEventListener('resize', positionPanel);
+      document.removeEventListener('pointerdown', closeOnDocumentPointerDown);
       panel.remove();
       closeActivePanel = null;
+    };
+    const closeOnDocumentPointerDown = (event) => {
+      const target = event.target;
+      if (target instanceof Node && (panel.contains(target) || anchor?.contains(target))) return;
+      close();
     };
     const positionPanel = () => {
       if (!anchor?.isConnected) { panel.style.visibility = ''; return; }
@@ -114,6 +120,7 @@ export function createThemeController({ onToast }) {
       panel.style.visibility = '';
     };
     window.addEventListener('resize', positionPanel);
+    document.addEventListener('pointerdown', closeOnDocumentPointerDown);
     closeActivePanel = close;
     panel.querySelector('[data-mode]').value = theme.mode;
     panel.querySelector('[data-accent]').value = theme.accent;

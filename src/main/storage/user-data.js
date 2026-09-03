@@ -56,7 +56,9 @@ function migrateSettings(settings = {}) {
   if (version < 2 && next.aiConfiguration?.apiKey) {
     delete next.aiConfiguration.apiKey;
   }
-  if (typeof next.autoUpdate !== 'boolean') next.autoUpdate = false;
+  // New installations opt into update notifications by default. An explicit
+  // user choice is preserved across migrations and releases.
+  if (typeof next.autoUpdate !== 'boolean') next.autoUpdate = true;
   return next;
 }
 

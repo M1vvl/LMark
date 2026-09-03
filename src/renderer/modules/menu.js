@@ -4,7 +4,7 @@ const MENUS = {
   file: [['open', '打开文件', 'Open file', 'Ctrl O']],
   edit: [['undo', '撤销', 'Undo', 'Ctrl Z'], ['redo', '重做', 'Redo', 'Ctrl Y']],
   view: [['toggle-sidebar', '显示/隐藏工作区', 'Show/hide sidebar', 'Ctrl B'], ['theme', '主题设置', 'Theme settings', '']],
-  help: [['shortcuts', '快捷键', 'Keyboard shortcuts', ''], ['about', '关于 LMark', 'About LMark', ''], ['feedback', '问题反馈', 'Feedback', '']]
+  help: [['shortcuts', '快捷键', 'Keyboard shortcuts', ''], ['onboarding', '功能引导', 'Feature guide', ''], ['about', '关于 LMark', 'About LMark', ''], ['feedback', '问题反馈', 'Feedback', '']]
 };
 
 export function createMenuController({ onAction }) {

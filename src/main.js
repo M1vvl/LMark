@@ -78,6 +78,45 @@ function settingsFilePath() {
   return path.join(app.getPath('userData'), 'settings.json');
 }
 
+function readGlobalMapSettings() {
+  const saved = localSettings?.globalMapSettings && typeof localSettings.globalMapSettings === 'object'
+    ? localSettings.globalMapSettings
+    : {};
+  const decrypt = (encrypted, fallback) => {
+    if (encrypted && safeStorage.isEncryptionAvailable()) {
+      try { return safeStorage.decryptString(Buffer.from(encrypted, 'base64')); }
+      catch (error) { logStartup('A saved map token could not be decrypted', error); }
+    }
+    return typeof fallback === 'string' ? fallback : '';
+  };
+  return {
+    configured: Boolean(localSettings?.globalMapSettings),
+    mapSource: ['cesium', 'tianditu'].includes(saved.mapSource) ? saved.mapSource : 'cesium',
+    cesiumToken: decrypt(saved.cesiumTokenEncrypted, saved.cesiumToken),
+    tiandituToken: decrypt(saved.tiandituTokenEncrypted, saved.tiandituToken)
+  };
+}
+
+async function persistGlobalMapSettings(value) {
+  const current = readGlobalMapSettings();
+  const next = {
+    mapSource: ['cesium', 'tianditu'].includes(value?.mapSource) ? value.mapSource : current.mapSource,
+    cesiumToken: typeof value?.cesiumToken === 'string' ? value.cesiumToken.trim() : current.cesiumToken,
+    tiandituToken: typeof value?.tiandituToken === 'string' ? value.tiandituToken.trim() : current.tiandituToken
+  };
+  const saved = { mapSource: next.mapSource };
+  if (safeStorage.isEncryptionAvailable()) {
+    if (next.cesiumToken) saved.cesiumTokenEncrypted = safeStorage.encryptString(next.cesiumToken).toString('base64');
+    if (next.tiandituToken) saved.tiandituTokenEncrypted = safeStorage.encryptString(next.tiandituToken).toString('base64');
+  } else {
+    saved.cesiumToken = next.cesiumToken;
+    saved.tiandituToken = next.tiandituToken;
+  }
+  localSettings.globalMapSettings = saved;
+  await saveLocalSettings();
+  return next;
+}
+
 function loadLocalSettings() {
   try {
     localSettings = migrateSettings(JSON.parse(fs.readFileSync(settingsFilePath(), 'utf8')) || {});
@@ -145,6 +184,111 @@ async function ensureManagedProjectsRoot() {
 function globalRootPath() { return path.join(app.getPath('userData'), GLOBAL_ROOT_NAME); }
 async function ensureGlobalRoot() { const root = globalRootPath(); await fs.promises.mkdir(root, { recursive: true }); return root; }
 
+function globalUserDataPath(...segments) {
+  return path.join(globalRootPath(), 'UserData', ...segments);
+}
+
+async function readGlobalAtlasStore() {
+  try {
+    const value = JSON.parse(await fs.promises.readFile(globalUserDataPath('atlas-store.json'), 'utf8'));
+    return value && typeof value === 'object'
+      ? { state: value.state && typeof value.state === 'object' ? value.state : null, records: Array.isArray(value.records) ? value.records : [], updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : '' }
+      : { state: null, records: [], updatedAt: '' };
+  } catch (error) {
+    if (error?.code !== 'ENOENT') logStartup('Global atlas data could not be read', error);
+    return { state: null, records: [], updatedAt: '' };
+  }
+}
+
+async function writeGlobalAtlasStore(value) {
+  if (!value || typeof value !== 'object' || !Array.isArray(value.records) || value.records.length > 100000) {
+    throw new Error('环球区数据格式无效');
+  }
+  // The embedded StarMap can have more than one page/window open. A stale
+  // page must not replace records created by another page since its last
+  // reload. Merge by the stable record id; explicit deletion is handled by
+  // the editor's delete operation and is therefore not inferred here.
+  const current = await readGlobalAtlasStore();
+  const incomingTime = Date.parse(typeof value.updatedAt === 'string' ? value.updatedAt : '') || Date.now();
+  const currentTime = Date.parse(current.updatedAt || '') || 0;
+  const records = incomingTime < currentTime
+    ? (() => {
+        const recordsById = new Map();
+        for (const record of current.records) {
+          if (record && typeof record === 'object' && typeof record.id === 'string' && record.id) recordsById.set(record.id, record);
+        }
+        for (const record of value.records) {
+          if (record && typeof record === 'object' && typeof record.id === 'string' && record.id) recordsById.set(record.id, record);
+        }
+        return [...recordsById.values()];
+      })()
+    : value.records;
+  const target = globalUserDataPath('atlas-store.json');
+  await fs.promises.mkdir(path.dirname(target), { recursive: true });
+  const normalized = {
+    state: value.state && typeof value.state === 'object' ? value.state : null,
+    records,
+    updatedAt: new Date().toISOString()
+  };
+  const temporary = `${target}.tmp`;
+  await fs.promises.writeFile(temporary, JSON.stringify(normalized, null, 2), 'utf8');
+  try { await fs.promises.rename(temporary, target); }
+  catch (error) {
+    if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
+    await fs.promises.rm(target, { force: true });
+    await fs.promises.rename(temporary, target);
+  }
+  return normalized;
+}
+
+function readRequestBody(request, maximumBytes = 5 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let bytes = 0;
+    request.on('data', (chunk) => {
+      bytes += chunk.length;
+      if (bytes > maximumBytes) {
+        reject(new Error('请求内容过大'));
+        request.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    request.on('end', () => resolve(Buffer.concat(chunks)));
+    request.on('error', reject);
+  });
+}
+
+function sendJson(response, status, value) {
+  response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+  response.end(JSON.stringify(value));
+}
+
+function globalPhotoCatalogPath() { return globalUserDataPath('photos', 'catalog.json'); }
+
+async function readGlobalPhotoCatalog() {
+  try {
+    const value = JSON.parse(await fs.promises.readFile(globalPhotoCatalogPath(), 'utf8'));
+    return Array.isArray(value) ? value.filter((item) => item && typeof item === 'object' && typeof item.id === 'string') : [];
+  } catch (error) {
+    if (error?.code !== 'ENOENT') logStartup('Global photo catalog could not be read', error);
+    return [];
+  }
+}
+
+async function writeGlobalPhotoCatalog(items) {
+  const target = globalPhotoCatalogPath();
+  await fs.promises.mkdir(path.dirname(target), { recursive: true });
+  const temporary = `${target}.tmp`;
+  await fs.promises.writeFile(temporary, JSON.stringify(items, null, 2), 'utf8');
+  try { await fs.promises.rename(temporary, target); }
+  catch (error) {
+    if (!['EEXIST', 'EPERM'].includes(error.code)) throw error;
+    await fs.promises.rm(target, { force: true });
+    await fs.promises.rename(temporary, target);
+  }
+}
+
 function starMapRoots() {
   return [
     path.join(app.getAppPath(), GLOBAL_ROOT_NAME, 'StarMap', '01_Web'),
@@ -189,14 +333,105 @@ async function startGlobalStarMapServer(distRoot) {
   const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.wasm': 'application/wasm' };
   globalStarMapServer = http.createServer(async (request, response) => {
     try {
-      const pathname = decodeURIComponent(new URL(request.url || '/', 'http://localhost').pathname);
+      const requestUrl = new URL(request.url || '/', 'http://localhost');
+      const pathname = decodeURIComponent(requestUrl.pathname);
+      if (pathname === '/__lmark/global/store') {
+        if (request.method === 'GET') { sendJson(response, 200, { ok: true, store: await readGlobalAtlasStore() }); return; }
+        if (request.method === 'PUT') {
+          const body = JSON.parse((await readRequestBody(request)).toString('utf8'));
+          sendJson(response, 200, { ok: true, store: await writeGlobalAtlasStore(body) });
+          return;
+        }
+        sendJson(response, 405, { ok: false, error: 'Method not allowed' });
+        return;
+      }
+      if (pathname === '/__lmark/global/photos') {
+        if (request.method === 'GET') {
+          const cityId = requestUrl.searchParams.get('cityId') || '';
+          const items = (await readGlobalPhotoCatalog()).filter((item) => !cityId || item.cityId === cityId);
+          sendJson(response, 200, { ok: true, items: items.map((item) => ({ ...item, src: `/__lmark/global/photo/${encodeURIComponent(item.id)}` })) });
+          return;
+        }
+        if (request.method === 'POST') {
+          if (request.headers['x-lmark-global'] !== '1') { sendJson(response, 403, { ok: false, error: 'Invalid local request' }); return; }
+          const contentType = String(request.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+          const extensions = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/avif': '.avif' };
+          const extension = extensions[contentType];
+          if (!extension) { sendJson(response, 415, { ok: false, error: '只支持 JPG、PNG、WebP 或 AVIF 图片。' }); return; }
+          const cityId = requestUrl.searchParams.get('cityId') || '';
+          const countryId = requestUrl.searchParams.get('countryId') || '';
+          if (!cityId || !countryId) { sendJson(response, 400, { ok: false, error: '照片缺少城市或国家信息。' }); return; }
+          const body = await readRequestBody(request, 30 * 1024 * 1024);
+          if (!body.length) { sendJson(response, 400, { ok: false, error: '照片内容为空。' }); return; }
+          const requestedId = requestUrl.searchParams.get('id') || '';
+          const id = /^local-photo-[a-zA-Z0-9-]+$/.test(requestedId)
+            ? requestedId
+            : `local-photo-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+          const catalog = await readGlobalPhotoCatalog();
+          const existing = catalog.find((candidate) => candidate.id === id);
+          if (existing) { sendJson(response, 200, { ok: true, item: { ...existing, src: `/__lmark/global/photo/${encodeURIComponent(id)}` } }); return; }
+          const relativePath = path.join('photos', `${id}${extension}`);
+          const target = globalUserDataPath(relativePath);
+          await fs.promises.mkdir(path.dirname(target), { recursive: true });
+          await fs.promises.writeFile(target, body);
+          const item = {
+            id,
+            cityId,
+            countryId,
+            cityName: requestUrl.searchParams.get('cityName') || 'City',
+            countryName: requestUrl.searchParams.get('countryName') || 'Country',
+            originalFileName: requestUrl.searchParams.get('fileName') || `photo${extension}`,
+            contentType,
+            relativePath,
+            createdAt: Number.isFinite(Date.parse(requestUrl.searchParams.get('createdAt') || ''))
+              ? new Date(requestUrl.searchParams.get('createdAt')).toISOString()
+              : new Date().toISOString()
+          };
+          await writeGlobalPhotoCatalog([...catalog, item]);
+          sendJson(response, 200, { ok: true, item: { ...item, src: `/__lmark/global/photo/${encodeURIComponent(id)}` } });
+          return;
+        }
+        if (request.method === 'DELETE') {
+          if (request.headers['x-lmark-global'] !== '1') { sendJson(response, 403, { ok: false, error: 'Invalid local request' }); return; }
+          const id = requestUrl.searchParams.get('id') || '';
+          const catalog = await readGlobalPhotoCatalog();
+          const item = catalog.find((candidate) => candidate.id === id);
+          if (!item) { sendJson(response, 404, { ok: false, error: '照片不存在或已删除。' }); return; }
+          const root = path.resolve(globalUserDataPath());
+          const target = path.resolve(globalUserDataPath(), item.relativePath);
+          if (!target.toLowerCase().startsWith(`${root.toLowerCase()}${path.sep}`)) { sendJson(response, 403, { ok: false, error: '照片路径无效。' }); return; }
+          await fs.promises.rm(target, { force: true });
+          await writeGlobalPhotoCatalog(catalog.filter((candidate) => candidate.id !== id));
+          sendJson(response, 200, { ok: true });
+          return;
+        }
+        sendJson(response, 405, { ok: false, error: 'Method not allowed' });
+        return;
+      }
+      if (pathname.startsWith('/__lmark/global/photo/')) {
+        const id = decodeURIComponent(pathname.slice('/__lmark/global/photo/'.length));
+        const item = (await readGlobalPhotoCatalog()).find((candidate) => candidate.id === id);
+        if (!item) { response.writeHead(404); response.end('Not found'); return; }
+        const target = path.resolve(globalUserDataPath(), item.relativePath);
+        const root = path.resolve(globalUserDataPath());
+        if (!target.toLowerCase().startsWith(`${root.toLowerCase()}${path.sep}`)) { response.writeHead(403); response.end('Forbidden'); return; }
+        const data = await fs.promises.readFile(target);
+        response.writeHead(200, { 'Content-Type': item.contentType || 'application/octet-stream', 'Cache-Control': 'private, max-age=3600' });
+        response.end(data);
+        return;
+      }
       const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
       const target = path.resolve(distRoot, relative);
       if (target !== distRoot && !target.toLowerCase().startsWith(`${distRoot.toLowerCase()}${path.sep}`)) { response.writeHead(403); response.end('Forbidden'); return; }
       let file = target;
       try { if (!(await fs.promises.stat(file)).isFile()) throw new Error('not-file'); }
       catch { file = path.join(distRoot, 'index.html'); }
-      const data = await fs.promises.readFile(file);
+      let data = await fs.promises.readFile(file);
+      if (path.basename(file).toLowerCase() === 'index.html') {
+        const store = await readGlobalAtlasStore();
+        const serialized = JSON.stringify(store).replace(/</g, '\\u003c');
+        data = Buffer.from(data.toString('utf8').replace('</head>', `<script>window.__LMARK_GLOBAL_STORE__=${serialized};</script></head>`), 'utf8');
+      }
       response.writeHead(200, { 'Content-Type': mime[path.extname(file).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
       response.end(data);
     } catch { response.writeHead(500); response.end('StarMap server error'); }
@@ -850,6 +1085,22 @@ function registerIpcHandlers() {
   ipcMain.handle('global:start-starmap', async () => {
     try { return await startGlobalStarMap(); }
     catch (error) { return { ok: false, error: error.message }; }
+  });
+  ipcMain.handle('global:get-map-settings', () => ({ ok: true, settings: readGlobalMapSettings() }));
+  ipcMain.handle('global:set-map-settings', async (_event, value) => {
+    try { return { ok: true, settings: await persistGlobalMapSettings(value) }; }
+    catch (error) { return { ok: false, error: error.message }; }
+  });
+  ipcMain.handle('global:open-cesium-tutorial', async () => {
+    try {
+      const relative = path.join('Global', 'TileMapSettings', 'Cesium-ion-Token-Guide.pdf');
+      const candidates = [path.join(app.getAppPath(), relative), path.join(process.cwd(), relative), path.join(process.resourcesPath, relative), path.join(path.dirname(process.resourcesPath), relative)];
+      const target = candidates.find((candidate) => fs.existsSync(candidate));
+      if (!target) throw new Error('尚未找到 Cesium ion 教程 PDF');
+      const error = await shell.openPath(target);
+      if (error) throw new Error(error);
+      return { ok: true, path: target };
+    } catch (error) { return { ok: false, error: error.message }; }
   });
   ipcMain.handle('update:get-status', () => updater?.getStatus() || { configured: false, packaged: app.isPackaged, version: app.getVersion(), autoUpdate: Boolean(localSettings.autoUpdate) });
   ipcMain.handle('update:set-auto', async (_event, enabled) => {
