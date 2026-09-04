@@ -11,8 +11,11 @@ module.exports = {
   asarUnpack: ['src/main/mcp-server.js'],
   files: ['src/**/*', 'package.json', 'README.md'],
   extraFiles: [
-    { from: 'Global/StarMap/01_Web/dist', to: 'Global/StarMap/01_Web/dist' },
-    { from: 'Global/TileMapSettings', to: 'Global/TileMapSettings' }
+    // Only the audited public StarMap build is tracked in the main repository.
+    // Its source, dependencies, private data and credentials remain outside
+    // the release boundary.
+    { from: 'release-assets/Global/StarMap/01_Web/dist', to: 'Global/StarMap/01_Web/dist' },
+    { from: 'release-assets/Global/TileMapSettings', to: 'Global/TileMapSettings' }
   ],
   directories: { output: 'release-publish' },
   win: { icon: 'build/lmark.ico', signExecutable: false, target: [{ target: 'dir', arch: ['x64'] }] },
